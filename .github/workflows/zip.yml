@@ -9,5 +9,5 @@ jobs:
       uses: thedoctor0/zip-release@0.7.5
       with:
         type: 'zip'
-        filename: 'logs_tf_extended_plus-x.x.x.zip'
-        exclusions: '*.git* /*node_modules/* .editorconfig README.md builds /.github'
+        filename: 'builds/logs_tf_extended_plus-x.x.x.zip'
+        exclusions: '*.git* /*node_modules/* .editorconfig README.md builds/ /.github'
