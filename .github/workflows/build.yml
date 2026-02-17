@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Build extensions with bepp
-    runs-on: windows-latest # Must be macos for Safari extension build
+    runs-on: macos-latest # Must be macos for Safari extension build
     steps:
 
         - name: 🛎 Checkout
