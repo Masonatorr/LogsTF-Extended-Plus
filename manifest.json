@@ -1,8 +1,7 @@
 {
-    "update_url": "https://clients2.google.com/service/update2/crx",
     "manifest_version": 3,
     "name": "Logs.tf Extended Plus",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Adds ETF2L and RGL info to logs on logs.tf. Also shows extra info on log and profile pages.",
     "permissions": [
         "storage"
@@ -48,7 +47,7 @@
     },
     "browser_specific_settings": {
         "gecko": {
-            "id": "@logs-tf-extended-plus",
+            "id": "@logs-tf-extended-plus-public",
             "data_collection_permissions": {
                 "required": ["none"]
             }
