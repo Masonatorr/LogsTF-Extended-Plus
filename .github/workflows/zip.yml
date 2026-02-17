@@ -10,4 +10,4 @@ jobs:
       with:
         type: 'zip'
         filename: 'logs_tf_extended_plus-x.x.x.zip'
-        exclusions: '*.git* /*node_modules/* .editorconfig README.md /builds /.github'
+        exclusions: '*.git* /*node_modules/* .editorconfig README.md builds /.github'
