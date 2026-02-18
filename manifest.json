@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Logs.tf Extended Plus",
     "version": "1.1.2",
-    "description": "Adds ETF2L and RGL info to logs on logs.tf. Also shows extra info on log and profile pages.",
+    "description": "Adds RGL and ETF2L info to logs on logs.tf. Also shows extra info on log and profile pages.",
     "permissions": [
         "storage"
     ],
