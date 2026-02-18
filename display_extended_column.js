@@ -855,7 +855,7 @@ const updateLogRows = async (steamID) => {
             const formatting = ClassIconFormat[classPlayedName];
             const classIcon = document.createElement("i");
 
-            let dataString = `<table class='log table'><thead><tr><th>Played</th><th>K</th><th>A</th><th>D</th><th>DA</th><th>DA/M</th></tr></thead><tbody><tr><td>${Math.floor(classPlayed.total_time / 60)}:${classPlayed.total_time % 60}</td><td>${classPlayed.kills}</td><td>${classPlayed.assists}</td><td>${classPlayed.deaths}</td><td>${classPlayed.dmg}</td><td>${(classPlayed.dmg / (classPlayed.total_time / 60)).toFixed(0)}</td></tr></table>`;
+            let dataString = `<table class='log table'><thead><tr><th>Played</th><th>K</th><th>A</th><th>D</th><th>DA</th><th>DA/M</th></tr></thead><tbody><tr><td>${Math.floor(classPlayed.total_time / 60)}:${(classPlayed.total_time % 60).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</td><td>${classPlayed.kills}</td><td>${classPlayed.assists}</td><td>${classPlayed.deaths}</td><td>${classPlayed.dmg}</td><td>${(classPlayed.dmg / (classPlayed.total_time / 60)).toFixed(0)}</td></tr></table>`;
             //onsole.log(classPlayed.weapon);
             //onsole.log(Object.keys(classPlayed.weapon).length);
 
