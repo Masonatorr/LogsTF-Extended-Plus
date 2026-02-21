@@ -945,6 +945,8 @@ const updateLogRows = async (steamID) => {
             classIcon.onmouseleave = function(){deleteIconPopover()};
             classIcon.position = "relative"
             classIconsList.appendChild(classIcon);
+
+            classIconsList.style.fontWeight = "";
         }
         //classIcons.innerText = icons;
 
