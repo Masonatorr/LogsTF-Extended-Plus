@@ -17,3 +17,5 @@ Adds the following information when viewing single logs:
 Adds the following information when viewing a player's profile:
 - Class played in each log, with class and weapon stats (as well as Medic stats if Medic was played)
 - Final score of each log
+
+Version notes can be found in [Releases](https://github.com/Masonatorr/LogsTF-Extended-Plus/releases)
