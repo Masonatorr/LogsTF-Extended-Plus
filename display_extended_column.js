@@ -654,7 +654,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
 	const numPlayers = listOfSteamIDs.length;
 	const gamemode = numPlayers < 16 && numPlayers >= 10 ? "6s" : numPlayers >= 16 && numPlayers < 22 ? "HL" : null;
-    console.log(gamemode)
+    //console.log(gamemode)
 	currentBrowser.storage.local.set({playedGamemode: gamemode});
 	
 	if (gamemode === "6s" || gamemode === "HL")
@@ -741,7 +741,7 @@ const processLogInfo = async (logID) => {
     delete logInfo.killstreaks;
     delete logInfo.success
     delete logInfo.info;
-    console.log(logInfo);
+    //console.log(logInfo);
     return logInfo;
 }
 
@@ -835,7 +835,7 @@ const updateLogRows = async (steamID) => {
         const steamID64Shortened = steamID64.substring(steamID64.length - 13)
         //console.log(`steamid64shortened: ${steamID64Shortened}`)
         const steamID3 = `[U:1:${steamID64Shortened - steamID64BaseShortened}]`;
-        console.log(`steamid3: ${steamID3}`)
+        //console.log(`steamid3: ${steamID3}`)
     
         const playerInfo = logInfo.players[steamID3];
         //console.log(playerInfo);
@@ -861,16 +861,16 @@ const updateLogRows = async (steamID) => {
 
             let weaponsUsed = [];
             const weaponsUsedKeys = Object.keys(classPlayed.weapon);
-            console.log(weaponsUsedKeys);
+            //console.log(weaponsUsedKeys);
             let hasPistol = false;
             let hasScoutPistol = false;
             let firstPistolIndex = -1
             for (k = 0; k < weaponsUsedKeys.length; k++) {
                 if (weaponsUsedKeys[k] == "pistol") {
-                    console.log("pistol!")
+                    //console.log("pistol!")
                     hasPistol = true
                     if (hasScoutPistol) {
-                        console.log("merging!")
+                        //console.log("merging!")
                         weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
                         weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
                         weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
@@ -882,10 +882,10 @@ const updateLogRows = async (steamID) => {
                     }
                 };
                 if (weaponsUsedKeys[k] == "pistol_scout") {
-                    console.log("scout pistol!")
+                    //console.log("scout pistol!")
                     hasScoutPistol = true
                     if (hasPistol) {
-                        console.log("merging!")
+                        //console.log("merging!")
                         weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
                         weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
                         weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
@@ -897,12 +897,12 @@ const updateLogRows = async (steamID) => {
                     }
                 };
                 weaponsUsed.push([weaponsUsedKeys[k], classPlayed.weapon[weaponsUsedKeys[k]]]);
-                console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
+                //console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
             }
-            console.log(weaponsUsed);
+            //console.log(weaponsUsed);
             weaponsUsed = weaponsUsed.sort((a, b) => {
-                console.log(a[1].kills);
-                console.log(b[1].kills);
+                //console.log(a[1].kills);
+                //console.log(b[1].kills);
                 if (a[1].kills > b[1].kills) {
                     return -1
                 } else if (a[1].kills == b[1].kills) {
@@ -915,23 +915,23 @@ const updateLogRows = async (steamID) => {
                     }
                 }
             });
-            console.log(weaponsUsed);
+            //console.log(weaponsUsed);
             const weaponKeys = Object.keys(weaponsUsed)
             if (weaponKeys.length > 0) {
                 let stringToInsert = ""
                 for (k = 0; k < weaponKeys.length; k++) {
                     const curWeapon = weaponsUsed[k][1]
-                    console.log(curWeapon);
+                    //console.log(curWeapon);
                     if (curWeapon.kills == 0 && curWeapon.dmg == 0 && curWeapon.shots == 0) continue;
                     stringToInsert = `${stringToInsert}<tr><td>${WeaponLookupTable[weaponsUsed[k][0]]}</td><td>${curWeapon.kills}${weaponsUsed.length == 1 ? "" : classPlayed.kills > 0 ? " (" + ((curWeapon.kills / classPlayed.kills) * 100).toFixed(0) + "%)" : ""}</td><td>${weaponsUsed[k][0] == "world" ? "-" : curWeapon.dmg}${weaponsUsed.length == 1 || weaponsUsed[k][0] == "world" ? "" : classPlayed.dmg > 0 ? " (" + ((curWeapon.dmg / classPlayed.dmg) * 100).toFixed(0) + "%)" : ""}<td>${curWeapon.shots > 0 ? (((curWeapon.hits / curWeapon.shots) * 100).toFixed(0)) + "%" : "-"}</td></td></tr>`;
                 }
-                console.log(stringToInsert);
+                //console.log(stringToInsert);
                 dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Weapon</th><th>K</th><th>DA</th><th>Acc</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
             }
 
             if (classPlayedName === "medic" && playerInfo.heal > 0) {
                 const stringToInsert = `<tr><td style="text-align: center">${playerInfo.heal}<br>(${(playerInfo.heal / (gameDuration / 60)).toFixed(0)}/m)</td><td>${playerInfo.ubertypes.hasOwnProperty("medigun") ? playerInfo.ubertypes.medigun : 0}</td><td>${playerInfo.ubertypes.hasOwnProperty("kritzkrieg") ? playerInfo.ubertypes.kritzkrieg : 0}</td><td>${playerInfo.drops}</td><td>${playerInfo.medicstats.avg_time_to_build != undefined ? parseFloat(playerInfo.medicstats.avg_time_to_build).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_time_before_using != undefined ? parseFloat(playerInfo.medicstats.avg_time_before_using).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_uber_length != undefined ? parseFloat(playerInfo.medicstats.avg_uber_length).toFixed(1) + "s" : "-"}</td></tr>`;
-                console.log(stringToInsert);
+                //console.log(stringToInsert);
                 dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Heals</th><th style="text-align: center">Ü</th><th style="text-align: center">Kr</th><th>Drops</th><th style="text-align: center">Time to<br>Build</th><th style="text-align: center">Time to<br>Use</th><th style="text-align: center">Uber<br>Time</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
             }
 
@@ -1040,7 +1040,7 @@ console.log(pageURL);
 window.localStorage.clear();
 if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
     if (pageURL.includes("profile")) {
-        console.log(pageURL);
+        //console.log(pageURL);
         console.log("Parsing player profile stats and info!")
 
         const steamID = pageURL.substring(pageURL.indexOf("profile") + 8, pageURL.lastIndexOf("?") != -1 ? pageURL.lastIndexOf("?") : pageURL.length);
@@ -1054,7 +1054,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
         updateLogRows(steamID);
     } else if (pageURL.length > 16) {
-        console.log(pageURL);
+        //console.log(pageURL);
         console.log("Parsing single log stats and info!")
 
         const mainElement = document.getElementsByClassName("container main")[0];
@@ -1087,7 +1087,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 }
 
 window.onload = async function() {
-    console.log("onload")
+    //console.log("onload")
     const pageURL = document.URL
     if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
         console.log("valid page")
@@ -1179,8 +1179,8 @@ window.onload = async function() {
                 HealsRed[i].insertBefore(HPMRed, HealsRed[i].getElementsByTagName("td")[3])
             }
 
-            console.log("width");
-            console.log(heal_healtables[0].style);
+            //console.log("width");
+            //console.log(heal_healtables[0].style);
             heal_healtables[0].style.width = "350px";
             heal_healtables[1].style.width = "350px";
 
@@ -1244,10 +1244,10 @@ window.onload = async function() {
             let heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
 
             const heal_bluheals = heal_medvalblu.innerHTML.substring(heal_medvalblu.innerHTML.indexOf("strong") + 7, heal_medvalblu.innerHTML.lastIndexOf("strong") - 2);
-            console.log(heal_bluheals);
+            //console.log(heal_bluheals);
             const heal_blutimealive = bluMedicTimePlayed - (14 * bluMedicDeaths);
             const heal_bluhealsperminutealive = heal_bluheals / (heal_blutimealive / 60);
-            console.log(heal_bluhealsperminutealive);
+            //console.log(heal_bluhealsperminutealive);
 
             //const bluHPMAElement = this.document.createElement("td");
             //bluHPMAElement.classList.add("tip");
@@ -1264,10 +1264,10 @@ window.onload = async function() {
             heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_bluhealsperminutealive.toFixed(0)}/m alive)</span>`
 
             const heal_redheals = heal_medvalred.innerHTML.substring(heal_medvalred.innerHTML.indexOf("strong") + 7, heal_medvalred.innerHTML.lastIndexOf("strong") - 2);
-            console.log(heal_redheals);
+            //console.log(heal_redheals);
             const heal_redtimealive = redMedicTimePlayed - (14 * redMedicDeaths);
             const heal_redhealsperminutealive = heal_redheals / (heal_redtimealive / 60);
-            console.log(heal_redhealsperminutealive);
+            //console.log(heal_redhealsperminutealive);
 
             heal_medvalred.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_redhealsperminutealive.toFixed(0)}/m alive)</span>`
         }
@@ -1284,16 +1284,16 @@ function processRow(el, index, array) {
     let DABlu = this[1];
     let teamOrTotalDamage = this[2];
 
-	console.log("start enhancer logging");
-    console.log(team);
-    console.log(DARed);
-    console.log(DABlu);
-    console.log(teamOrTotalDamage);
-    console.log(DA.innerText);
-    console.log(DAM.innerText);
-    console.log(DT.innerText);
-    console.log(DTM.innerText);
-	console.log("end enhancer logging");
+	//console.log("start enhancer logging");
+    //console.log(team);
+    //console.log(DARed);
+    //console.log(DABlu);
+    //console.log(teamOrTotalDamage);
+    //console.log(DA.innerText);
+    //console.log(DAM.innerText);
+    //console.log(DT.innerText);
+    //console.log(DTM.innerText);
+	//console.log("end enhancer logging");
 
     let DE = DT.cloneNode(true);
     //DE.setAttribute("data-original-title", "Damage Efficiency");
@@ -1303,7 +1303,7 @@ function processRow(el, index, array) {
 
     let DAPercent = DT.cloneNode(true);
     let DATotal = teamOrTotalDamage ? parseFloat(DARed) + parseFloat(DABlu) : team === "RED" ? DARed : DABlu;
-    console.log(DATotal);
+    //console.log(DATotal);
     DAPercent.innerText = (((parseFloat(DA.innerText) / parseFloat(DATotal)) * 100)
         .toFixed(1)) + "%";
     el.insertBefore(DAPercent, DAM);
