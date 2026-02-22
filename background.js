@@ -22,8 +22,8 @@ const getRGLPastTeams = async (steamID) => {
     let response = await fetch(uri);
     if (checkForErrors(response) === "ratelimit") {
         for (i = 0; i < 10; i++) {
-            console.log(`retrying after ${1500 * (i + 1)}ms`);
-            await timer(1500 * (i + 1));
+            console.log(`retrying after ${3000 * (i + 1)}ms`);
+            await timer(3000 * (i + 1));
             response = await fetch(uri);
             if (!checkForErrors(response)) return await response.json();
         }
@@ -42,8 +42,8 @@ const getRGLProfile = async (steamID) => {
     let response = await fetch(uri);
     if (checkForErrors(response) === "ratelimit") {
         for (i = 0; i < 10; i++) {
-            console.log(`retrying after ${1500 * (i + 1)}ms`);
-            await timer(1500 * (i + 1));
+            console.log(`retrying after ${3000 * (i + 1)}ms`);
+            await timer(3000 * (i + 1));
             response = await fetch(uri);
             if (!checkForErrors(response)) return await response.json();
         }
@@ -62,8 +62,8 @@ const GetETF2LProfile = async (steamID) => {
     let response = await fetch(uriETF2L);
     if (checkForErrors(response) === "ratelimit") {
         for (i = 0; i < 10; i++) {
-            console.log(`retrying after ${500 * (i + 1)}ms`);
-            await timer(1500 * (i + 1));
+            console.log(`retrying after ${3000 * (i + 1)}ms`);
+            await timer(3000 * (i + 1));
             response = await fetch(uriETF2L);
             if (!checkForErrors(response)) return await response.json();
         }
@@ -82,7 +82,7 @@ const getLogInfo = async (logID) => {
     let response = await fetch(uriLog);
     if (checkForErrors(response) === "ratelimit") {
         for (i = 0; i < 10; i++) {
-            console.log(`retrying after ${75 * (i + 1)}ms`);
+            console.log(`retrying after ${200 * (i + 1)}ms`);
             await timer(200 * (i + 1));
             response = await fetch(uriLog);
             if (!checkForErrors(response)) return await response.json();
@@ -125,6 +125,7 @@ const getAllData = async (ID, messageType) => {
 };
 
 currentBrowser.runtime.onInstalled.addListener(async () => {
+    //div settings
     await currentBrowser.storage.local.set({
         showRGL: true
     });
@@ -137,8 +138,46 @@ currentBrowser.runtime.onInstalled.addListener(async () => {
     await currentBrowser.storage.local.set({
         showRGLTeam: true
     });
+
+    //stat settings
     await currentBrowser.storage.local.set({
         damagePercentTotalOrTeam: false
+    });
+    await currentBrowser.storage.local.set({
+        showDamagePercent: true
+    });
+    await currentBrowser.storage.local.set({
+        showDamageEfficiency: true
+    });
+    await currentBrowser.storage.local.set({
+        showPlayerHPM: true
+    });
+    await currentBrowser.storage.local.set({
+        showMedicHPMA: true
+    });
+
+    //profile settings
+    await currentBrowser.storage.local.set({
+        showMatchScores: true
+    });
+    await currentBrowser.storage.local.set({
+        showClassesPlayed: true
+    });
+
+    //theme
+    await currentBrowser.storage.local.set({
+        theme: true
+    });
+
+    //collapsibles
+    await currentBrowser.storage.local.set({
+        leagueDropdown: false
+    });
+    await currentBrowser.storage.local.set({
+        statsDropdown: false
+    });
+    await currentBrowser.storage.local.set({
+        profileDropdown: false
     });
 });
 

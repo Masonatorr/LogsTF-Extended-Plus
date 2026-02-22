@@ -9,46 +9,160 @@
 
 <body>
     <main>
-        <label class="popup-title">Display:</label>
-        <div class="org-buttons">
-            <div class="org-container">
-                <label>
-                    ETF2L
-                </label>
-                <input id="etf2l-input" class="org-button" type="checkbox">
-            </div>
-            <div class="org-container">
-                <label>
-                    RGL
-                </label>
-                <input id="rgl-input" class="org-button" type="checkbox">
-            </div>
-            <div class="org-container">
-                <label>
-                    RGL Team
-                </label>
-                <input id="rgl-team-input" class="org-button" type="checkbox">
+        <label class="popup-title">Settings</label>
+        <div class="theme-container" id="theme-grid" style="align-items: center;">
+            <img id="light-icon" src="icons/light-icon.png" width="18" height="18" style="grid-column: 1; width: auto;">
+            <label class="theme-switch" style="grid-column: 2">
+                <input id="theme-toggle" type="checkbox">
+                <span class="theme-slider"></span>
+            </label>
+            <img id="dark-icon" src="icons/dark-icon.png" width="18" height="18" style="grid-column: 3; width: auto;">
+        </div>
+        <div>
+            <div class="section-title-container">
+                <label class="section-title">―――――League Display Settings―――――</label>
+                <!--<label class="dropdown">
+                    <input id="league-dropdown" type="checkbox">
+                    <img class="dropdown-arrow" src="icons/dropdown-arrow.png" width="16" height="10">
+                </label>-->
             </div>
             <div>
-                <label>
-                    Most recent vs highest RGL division played
-                </label>
-                <label class="switch">
-                    <input id="get-highest-division-toggle" type="checkbox">
-                    <span class="slider"></span>
+                <label class="dropdown">
+                    <input class="collapsible" id="league-dropdown" type="checkbox" style="right: 5px">
+                    <span class="dropdown-text dropdown-text-league">Collapse</span>
                 </label>
             </div>
+            <div class="league-dropdown-div collapsible">
+                <div class="org-buttons">
+                    <div class="org-container">
+                        <label>
+                            Show ETF2L Username
+                        </label>
+                        <input id="etf2l-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show RGL Username
+                        </label>
+                        <input id="rgl-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show RGL Team
+                        </label>
+                        <input id="rgl-team-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            RGL Division Shown:
+                        </label>
+                        <br>
+                        <span class="either-or-switch-container" id="division-toggle-grid">
+                            <label class="either-or-left" style="color: white">Most recent<br>div</label>
+                            <label class="switch either-or-switch">
+                                <input id="get-highest-division-toggle" type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                            <label class="either-or-right">Highest<br>div</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-title-container">
+                <label class="section-title">―――――Stat Display Settings―――――</label>
+            </div>
             <div>
-                <label>
-                    DA% based on total damage vs team damage
+                <label class="dropdown">
+                    <input id="stats-dropdown" type="checkbox" style="right: 5px">
+                    <span class="dropdown-text dropdown-text-stats">Collapse</span>
                 </label>
-                <label class="switch">
-                    <input id="damage-percent-total-or-team" type="checkbox">
-                    <span class="slider"></span>
+            </div>
+            <div class="stats-dropdown-div collapsible">
+                <div class="org-buttons">
+                    <div class="org-container">
+                        <label>
+                            Show Damage Percent
+                        </label>
+                        <input id="show-damage-percent" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show Damage Efficiency
+                        </label>
+                        <input id="show-damage-efficiency" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show Player HPM
+                        </label>
+                        <input id="show-player-hpm" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show Medic HPM<br>While Alive
+                        </label>
+                        <input id="show-medic-hpma" class="org-button" type="checkbox" style="transform: translateY(-12px);">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Damage Percent Based On:
+                        </label>
+                        <br>
+                        <span class="either-or-switch-container" id="da%-toggle-grid">
+                            <label class="either-or-left">Team<br>damage</label>
+                            <label class="switch either-or-switch">
+                                <input id="damage-percent-total-or-team" type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                            <label class="either-or-right">Total<br>damage</label>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-title-container">
+                <label class="section-title">―――――Profile Display Settings―――――</label>
+            </div>
+            <div>
+                <label class="dropdown">
+                    <input id="profile-dropdown" type="checkbox" style="right: 5px">
+                    <span class="dropdown-text dropdown-text-profile">Collapse</span>
                 </label>
+            </div>
+            <div class="profile-dropdown-div collapsible">
+                <div class="org-buttons">
+                    <div class="org-container">
+                        <label>
+                            Show Match Scores
+                        </label>
+                        <input id="show-match-scores" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show Classes Played
+                        </label>
+                        <input id="show-classes-played" class="org-button" type="checkbox">
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+
+    <!--<script>
+    const collapsibles = document.getElementsByClassName("collapsible");
+    let i;
+
+    for (i = 0; i < collapsibles.length; i++) {
+    collapsibles[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        const content = this.parentNode.parentNode.nextElementSibling;
+        if (content.style.maxHeight){
+        content.style.maxHeight = null;
+        } else {
+        content.style.maxHeight = `${content.scrollHeight}px`;
+        } 
+    });
+    }
+    </script>-->
 </body>
 
 </html>

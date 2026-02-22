@@ -25,8 +25,20 @@ const getHighestDivisionPlayedFlag = async () =>
     .getHighestDivisionPlayed;
 const getPlayedGamemodeFlag = async () => (await currentBrowser.storage.local.get("playedGamemode"))
 	.playedGamemode;
-const getdamagePercentTotalOrTeamFlag = async () => (await currentBrowser.storage.local.get("damagePercentTotalOrTeam"))
+const getDamagePercentTotalOrTeamFlag = async () => (await currentBrowser.storage.local.get("damagePercentTotalOrTeam"))
 	.damagePercentTotalOrTeam;
+const getShowDamagePercentFlag = async () => (await currentBrowser.storage.local.get("showDamagePercent"))
+	.showDamagePercent;
+const getShowDamageEfficiencyFlag = async () => (await currentBrowser.storage.local.get("showDamageEfficiency"))
+	.showDamageEfficiency;
+const getShowPlayerHPMFlag = async () => (await currentBrowser.storage.local.get("showPlayerHPM"))
+	.showPlayerHPM;
+const getShowMedicHPMAFlag = async () => (await currentBrowser.storage.local.get("showMedicHPMA"))
+	.showMedicHPMA;
+const getShowMatchScoresFlag = async () => (await currentBrowser.storage.local.get("showMatchScores"))
+	.showMatchScores;
+const getShowClassesPlayedFlag = async () => (await currentBrowser.storage.local.get("showClassesPlayed"))
+	.showClassesPlayed;
 
 const RGLDivisions = Object.freeze({
     None: 0,
@@ -754,47 +766,57 @@ const updateLogRows = async (steamID) => {
     const logsListed = logTableBody.getElementsByTagName("tr");
     const numLogs = logsListed.length;
 
-    const classColumn = document.createElement("th");
-    classColumn.innerText = "Class";
-    classColumn.style.width = "fit-content";
-    classColumn.style.minWidth = "50px";
-    classColumn.classList.add("center");
-    logTableHeader.insertBefore(classColumn, logTableHeader.children[2]);
+    const showClassesPlayed = await getShowClassesPlayedFlag();
+    if (showClassesPlayed) {
+        const classColumn = document.createElement("th");
+        classColumn.innerText = "Class";
+        classColumn.style.width = "fit-content";
+        classColumn.style.minWidth = "50px";
+        classColumn.classList.add("center");
+        logTableHeader.insertBefore(classColumn, logTableHeader.children[2]);
+    }
     
-    const scoreColumn = document.createElement("th");
-    scoreColumn.innerText = "Score";
-    scoreColumn.style.minWidth = "50px";
-    scoreColumn.classList.add("center", "tip");
-    scoreColumn.setAttribute("data-original-title", "Win - Loss - Stalemate")
-    logTableHeader.insertBefore(scoreColumn, logTableHeader.children[0]);
+    const showMatchScores = await getShowMatchScoresFlag();
+    if (showMatchScores) {
+        const scoreColumn = document.createElement("th");
+        scoreColumn.innerText = "Score";
+        scoreColumn.style.minWidth = "50px";
+        scoreColumn.classList.add("center", "tip");
+        scoreColumn.setAttribute("data-original-title", "Win - Loss - Stalemate")
+        logTableHeader.insertBefore(scoreColumn, logTableHeader.children[0]);
+    }
 
     for (let i = 0; i < numLogs; i++) {
         const curLog = logsListed[i];
 
-        const classIconsList = document.createElement("td");
-        classIconsList.style.width = "auto";
-        classIconsList.style.minWidth = "50px";
-        //classIconsList.style.maxWidth = "75px";
-        classIconsList.style.backgroundColor = "#ffffff00";
-        classIconsList.style.fontWeight = "bold";
-        classIconsList.classList.add("center", "classlist");
-        classIconsList.innerText = "-";
+        if (showClassesPlayed) {
+            const classIconsList = document.createElement("td");
+            classIconsList.style.width = "auto";
+            classIconsList.style.minWidth = "50px";
+            //classIconsList.style.maxWidth = "75px";
+            classIconsList.style.backgroundColor = "#ffffff00";
+            classIconsList.style.fontWeight = "bold";
+            classIconsList.classList.add("center", "classlist");
+            classIconsList.innerText = "-";
         
-        curLog.insertBefore(classIconsList, curLog.children[2]);
+            curLog.insertBefore(classIconsList, curLog.children[2]);
+        }
 
-        const scorePreview = document.createElement("td");
-        //scorePreview.style.width = "75px";
-        scorePreview.style.backgroundColor = "#ffffff00";
-        scorePreview.style.fontWeight = "bold";
-        scorePreview.classList.add("center", "scorecontainer");
-        //scorePreview.style.width = "auto !important"
-        //scorePreview.style.border = "0px !important"
-        //scorePreview.style.padding = "0px !important"
-        //scorePreview.style.height = "auto !important"
-        //scorePreview.style = "background-color:#ffffff00;font-weight:bold"
-        scorePreview.innerText = "-";
+        if (showMatchScores) {
+            const scorePreview = document.createElement("td");
+            //scorePreview.style.width = "75px";
+            scorePreview.style.backgroundColor = "#ffffff00";
+            scorePreview.style.fontWeight = "bold";
+            scorePreview.classList.add("center", "scorecontainer");
+            //scorePreview.style.width = "auto !important"
+            //scorePreview.style.border = "0px !important"
+            //scorePreview.style.padding = "0px !important"
+            //scorePreview.style.height = "auto !important"
+            //scorePreview.style = "background-color:#ffffff00;font-weight:bold"
+            scorePreview.innerText = "-";
 
-        curLog.insertBefore(scorePreview, curLog.children[0]);
+            curLog.insertBefore(scorePreview, curLog.children[0]);
+        }
     }
 
     for (let i = 0; i < numLogs; i++) {
@@ -844,143 +866,146 @@ const updateLogRows = async (steamID) => {
 
         const gameDuration = logInfo["length"]
         
-        const classIconsList = curLog.getElementsByClassName("classlist")[0];
-        classIconsList.innerText = "";
-        const scorePreview = curLog.getElementsByClassName("scorecontainer")[0];
-        
-        //let icons = ""
-        for (j = 0; j < playerClassesPlayed.length; j++) {
-            const classPlayed = playerClassesPlayed[j];
-            const classPlayedName = classPlayed.type;
-            const formatting = ClassIconFormat[classPlayedName];
-            const classIcon = document.createElement("i");
+        if (showClassesPlayed) {
+            const classIconsList = curLog.getElementsByClassName("classlist")[0];
+            classIconsList.innerText = "";
 
-            let dataString = `<table class='log table'><thead><tr><th>Played</th><th>K</th><th>A</th><th>D</th><th>DA</th><th>DA/M</th></tr></thead><tbody><tr><td>${Math.floor(classPlayed.total_time / 60)}:${(classPlayed.total_time % 60).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</td><td>${classPlayed.kills}</td><td>${classPlayed.assists}</td><td>${classPlayed.deaths}</td><td>${classPlayed.dmg}</td><td>${(classPlayed.dmg / (classPlayed.total_time / 60)).toFixed(0)}</td></tr></table>`;
-            //onsole.log(classPlayed.weapon);
-            //onsole.log(Object.keys(classPlayed.weapon).length);
+            for (j = 0; j < playerClassesPlayed.length; j++) {
+                const classPlayed = playerClassesPlayed[j];
+                const classPlayedName = classPlayed.type;
+                const formatting = ClassIconFormat[classPlayedName];
+                const classIcon = document.createElement("i");
 
-            let weaponsUsed = [];
-            const weaponsUsedKeys = Object.keys(classPlayed.weapon);
-            //console.log(weaponsUsedKeys);
-            let hasPistol = false;
-            let hasScoutPistol = false;
-            let firstPistolIndex = -1
-            for (k = 0; k < weaponsUsedKeys.length; k++) {
-                if (weaponsUsedKeys[k] == "pistol") {
-                    //console.log("pistol!")
-                    hasPistol = true
-                    if (hasScoutPistol) {
-                        //console.log("merging!")
-                        weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
-                        weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
-                        weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
-                        weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
-                        weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
-                        continue;
-                    } else {
-                        firstPistolIndex = k;
-                    }
-                };
-                if (weaponsUsedKeys[k] == "pistol_scout") {
-                    //console.log("scout pistol!")
-                    hasScoutPistol = true
-                    if (hasPistol) {
-                        //console.log("merging!")
-                        weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
-                        weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
-                        weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
-                        weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
-                        weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
-                        continue;
-                    } else {
-                        firstPistolIndex = k;
-                    }
-                };
-                weaponsUsed.push([weaponsUsedKeys[k], classPlayed.weapon[weaponsUsedKeys[k]]]);
-                //console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
-            }
-            //console.log(weaponsUsed);
-            weaponsUsed = weaponsUsed.sort((a, b) => {
-                //console.log(a[1].kills);
-                //console.log(b[1].kills);
-                if (a[1].kills > b[1].kills) {
-                    return -1
-                } else if (a[1].kills == b[1].kills) {
-                    if (a[1].dmg > b[1].dmg) {
-                        return -1;
-                    } else if (a[1].dmg == b[1].dmg) {
-                        if ((a[1].hits / a[1].shots) > (b[1].hits / b[1].shots)) {
+                let dataString = `<table class='log table'><thead><tr><th>Played</th><th>K</th><th>A</th><th>D</th><th>DA</th><th>DA/M</th></tr></thead><tbody><tr><td>${Math.floor(classPlayed.total_time / 60)}:${(classPlayed.total_time % 60).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</td><td>${classPlayed.kills}</td><td>${classPlayed.assists}</td><td>${classPlayed.deaths}</td><td>${classPlayed.dmg}</td><td>${(classPlayed.dmg / (classPlayed.total_time / 60)).toFixed(0)}</td></tr></table>`;
+                //onsole.log(classPlayed.weapon);
+                //onsole.log(Object.keys(classPlayed.weapon).length);
+
+                let weaponsUsed = [];
+                const weaponsUsedKeys = Object.keys(classPlayed.weapon);
+                //console.log(weaponsUsedKeys);
+                let hasPistol = false;
+                let hasScoutPistol = false;
+                let firstPistolIndex = -1
+                for (k = 0; k < weaponsUsedKeys.length; k++) {
+                    if (weaponsUsedKeys[k] == "pistol") {
+                        //console.log("pistol!")
+                        hasPistol = true
+                        if (hasScoutPistol) {
+                            //console.log("merging!")
+                            weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
+                            weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
+                            weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
+                            weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
+                            weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
+                            continue;
+                        } else {
+                            firstPistolIndex = k;
+                        }
+                    };
+                    if (weaponsUsedKeys[k] == "pistol_scout") {
+                        //console.log("scout pistol!")
+                        hasScoutPistol = true
+                        if (hasPistol) {
+                            //console.log("merging!")
+                            weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
+                            weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
+                            weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
+                            weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
+                            weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
+                            continue;
+                        } else {
+                            firstPistolIndex = k;
+                        }
+                    };
+                    weaponsUsed.push([weaponsUsedKeys[k], classPlayed.weapon[weaponsUsedKeys[k]]]);
+                    //console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
+                }
+                //console.log(weaponsUsed);
+                weaponsUsed = weaponsUsed.sort((a, b) => {
+                    //console.log(a[1].kills);
+                    //console.log(b[1].kills);
+                    if (a[1].kills > b[1].kills) {
+                        return -1
+                    } else if (a[1].kills == b[1].kills) {
+                        if (a[1].dmg > b[1].dmg) {
                             return -1;
+                        } else if (a[1].dmg == b[1].dmg) {
+                            if ((a[1].hits / a[1].shots) > (b[1].hits / b[1].shots)) {
+                                return -1;
+                            }
                         }
                     }
+                });
+                //console.log(weaponsUsed);
+                const weaponKeys = Object.keys(weaponsUsed)
+                if (weaponKeys.length > 0) {
+                    let stringToInsert = ""
+                    for (k = 0; k < weaponKeys.length; k++) {
+                        const curWeapon = weaponsUsed[k][1]
+                        //console.log(curWeapon);
+                        if (curWeapon.kills == 0 && curWeapon.dmg == 0 && curWeapon.shots == 0) continue;
+                        stringToInsert = `${stringToInsert}<tr><td>${WeaponLookupTable[weaponsUsed[k][0]]}</td><td>${curWeapon.kills}${weaponsUsed.length == 1 ? "" : classPlayed.kills > 0 ? " (" + ((curWeapon.kills / classPlayed.kills) * 100).toFixed(0) + "%)" : ""}</td><td>${weaponsUsed[k][0] == "world" ? "-" : curWeapon.dmg}${weaponsUsed.length == 1 || weaponsUsed[k][0] == "world" ? "" : classPlayed.dmg > 0 ? " (" + ((curWeapon.dmg / classPlayed.dmg) * 100).toFixed(0) + "%)" : ""}<td>${curWeapon.shots > 0 ? (((curWeapon.hits / curWeapon.shots) * 100).toFixed(0)) + "%" : "-"}</td></td></tr>`;
+                    }
+                    //console.log(stringToInsert);
+                    dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Weapon</th><th>K</th><th>DA</th><th>Acc</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
                 }
-            });
-            //console.log(weaponsUsed);
-            const weaponKeys = Object.keys(weaponsUsed)
-            if (weaponKeys.length > 0) {
-                let stringToInsert = ""
-                for (k = 0; k < weaponKeys.length; k++) {
-                    const curWeapon = weaponsUsed[k][1]
-                    //console.log(curWeapon);
-                    if (curWeapon.kills == 0 && curWeapon.dmg == 0 && curWeapon.shots == 0) continue;
-                    stringToInsert = `${stringToInsert}<tr><td>${WeaponLookupTable[weaponsUsed[k][0]]}</td><td>${curWeapon.kills}${weaponsUsed.length == 1 ? "" : classPlayed.kills > 0 ? " (" + ((curWeapon.kills / classPlayed.kills) * 100).toFixed(0) + "%)" : ""}</td><td>${weaponsUsed[k][0] == "world" ? "-" : curWeapon.dmg}${weaponsUsed.length == 1 || weaponsUsed[k][0] == "world" ? "" : classPlayed.dmg > 0 ? " (" + ((curWeapon.dmg / classPlayed.dmg) * 100).toFixed(0) + "%)" : ""}<td>${curWeapon.shots > 0 ? (((curWeapon.hits / curWeapon.shots) * 100).toFixed(0)) + "%" : "-"}</td></td></tr>`;
+
+                if (classPlayedName === "medic" && playerInfo.heal > 0) {
+                    const stringToInsert = `<tr><td style="text-align: center">${playerInfo.heal}<br>(${(playerInfo.heal / (gameDuration / 60)).toFixed(0)}/m)</td><td>${playerInfo.ubertypes.hasOwnProperty("medigun") ? playerInfo.ubertypes.medigun : 0}</td><td>${playerInfo.ubertypes.hasOwnProperty("kritzkrieg") ? playerInfo.ubertypes.kritzkrieg : 0}</td><td>${playerInfo.drops}</td><td>${playerInfo.medicstats.avg_time_to_build != undefined ? parseFloat(playerInfo.medicstats.avg_time_to_build).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_time_before_using != undefined ? parseFloat(playerInfo.medicstats.avg_time_before_using).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_uber_length != undefined ? parseFloat(playerInfo.medicstats.avg_uber_length).toFixed(1) + "s" : "-"}</td></tr>`;
+                    //console.log(stringToInsert);
+                    dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Heals</th><th style="text-align: center">Ü</th><th style="text-align: center">Kr</th><th>Drops</th><th style="text-align: center">Time to<br>Build</th><th style="text-align: center">Time to<br>Use</th><th style="text-align: center">Uber<br>Time</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
                 }
-                //console.log(stringToInsert);
-                dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Weapon</th><th>K</th><th>DA</th><th>Acc</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
+
+                const opacity = ((classPlayed.total_time / gameDuration) + 0.4).toFixed(1);
+                classIcon.classList.add("classicon", classPlayedName);
+                classIcon.setAttribute("data-order", formatting.order);
+                classIcon.setAttribute("style", `opacity: ${opacity}`);
+                classIcon.setAttribute("data-title", formatting.title);
+                classIcon.setAttribute("data-content", dataString);
+                classIcon.onmouseenter = function(){showIconPopover(logInfo, classIcon, formatting.title)};
+                classIcon.onmouseleave = function(){deleteIconPopover()};
+                classIcon.position = "relative"
+                classIconsList.appendChild(classIcon);
+
+                classIconsList.style.fontWeight = "";
             }
-
-            if (classPlayedName === "medic" && playerInfo.heal > 0) {
-                const stringToInsert = `<tr><td style="text-align: center">${playerInfo.heal}<br>(${(playerInfo.heal / (gameDuration / 60)).toFixed(0)}/m)</td><td>${playerInfo.ubertypes.hasOwnProperty("medigun") ? playerInfo.ubertypes.medigun : 0}</td><td>${playerInfo.ubertypes.hasOwnProperty("kritzkrieg") ? playerInfo.ubertypes.kritzkrieg : 0}</td><td>${playerInfo.drops}</td><td>${playerInfo.medicstats.avg_time_to_build != undefined ? parseFloat(playerInfo.medicstats.avg_time_to_build).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_time_before_using != undefined ? parseFloat(playerInfo.medicstats.avg_time_before_using).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_uber_length != undefined ? parseFloat(playerInfo.medicstats.avg_uber_length).toFixed(1) + "s" : "-"}</td></tr>`;
-                //console.log(stringToInsert);
-                dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Heals</th><th style="text-align: center">Ü</th><th style="text-align: center">Kr</th><th>Drops</th><th style="text-align: center">Time to<br>Build</th><th style="text-align: center">Time to<br>Use</th><th style="text-align: center">Uber<br>Time</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
-            }
-
-            const opacity = ((classPlayed.total_time / gameDuration) + 0.4).toFixed(1);
-            classIcon.classList.add("classicon", classPlayedName);
-            classIcon.setAttribute("data-order", formatting.order);
-            classIcon.setAttribute("style", `opacity: ${opacity}`);
-            classIcon.setAttribute("data-title", formatting.title);
-            classIcon.setAttribute("data-content", dataString);
-            classIcon.onmouseenter = function(){showIconPopover(logInfo, classIcon, formatting.title)};
-            classIcon.onmouseleave = function(){deleteIconPopover()};
-            classIcon.position = "relative"
-            classIconsList.appendChild(classIcon);
-
-            classIconsList.style.fontWeight = "";
-        }
-        //classIcons.innerText = icons;
-
-        const redScore = logInfo.teams.Red.score;
-        const bluScore = logInfo.teams.Blue.score;
-        const roundsTied = logInfo.rounds - (redScore + bluScore);
-
-        const playerTeam = playerInfo.team;
-
-        let roundsWon;
-        let roundsLost;
-
-        if (playerTeam == "Red") {
-            roundsWon = redScore;
-            roundsLost = bluScore;
-        } else {
-            roundsWon = bluScore;
-            roundsLost = redScore;
         }
 
-        const scoreElement = document.createElement("td");
-        scoreElement.style.backgroundColor = roundsWon > roundsLost ? "#48a148" : roundsWon < roundsLost ? "#a14848" : "#a1a1a1";
-        scoreElement.style.color = "white";
-        scoreElement.style.fontWeight = "bold";
-        //scoreElement.style.minWidth = "35px";
-        //scoreElement.style.display = "inline";
-        scoreElement.style.textAlign = "center";
-        scoreElement.innerHTML = `${roundsWon} - ${roundsLost} - ${roundsTied}`;
-        scoreElement.style.padding = "6px";
-        scoreElement.style.marginLeft = "0px";
-        scoreElement.style.marginRight = "0px";
-        scoreElement.style.width = "auto !important"
+        if (showMatchScores) {
+            const scorePreview = curLog.getElementsByClassName("scorecontainer")[0];
+            
+            const redScore = logInfo.teams.Red.score;
+            const bluScore = logInfo.teams.Blue.score;
+            const roundsTied = logInfo.rounds - (redScore + bluScore);
 
-        scorePreview.replaceWith(scoreElement);
+            const playerTeam = playerInfo.team;
+
+            let roundsWon;
+            let roundsLost;
+
+            if (playerTeam == "Red") {
+                roundsWon = redScore;
+                roundsLost = bluScore;
+            } else {
+                roundsWon = bluScore;
+                roundsLost = redScore;
+            }
+
+            const scoreElement = document.createElement("td");
+            scoreElement.style.backgroundColor = roundsWon > roundsLost ? "#48a148" : roundsWon < roundsLost ? "#a14848" : "#a1a1a1";
+            scoreElement.style.color = "white";
+            scoreElement.style.fontWeight = "bold";
+            //scoreElement.style.minWidth = "35px";
+            //scoreElement.style.display = "inline";
+            scoreElement.style.textAlign = "center";
+            scoreElement.innerHTML = `${roundsWon} - ${roundsLost} - ${roundsTied}`;
+            scoreElement.style.padding = "6px";
+            scoreElement.style.marginLeft = "0px";
+            scoreElement.style.marginRight = "0px";
+            scoreElement.style.width = "auto !important"
+
+            scorePreview.replaceWith(scoreElement);
+        }
     }
 }
 
@@ -1107,182 +1132,202 @@ window.onload = async function() {
             let DABlu = document.getElementById("teams")
                 .getElementsByTagName("tbody")[0].getElementsByTagName("tr")[1].getElementsByTagName("td")[2].innerText;
             
-            const teamOrTotalDamage = await getdamagePercentTotalOrTeamFlag();
+            const teamOrTotalDamage = await getDamagePercentTotalOrTeamFlag();
 
-            let headerDE = headerDTM.cloneNode(true);
-            headerDE.getElementsByClassName("tip")[0].innerText = "DE";
-            headerDE.getElementsByClassName("tip")[0].setAttribute("data-original-title", "Damage / Damage Taken"); //"Damage Efficiency (Damage / Damage Taken)"
-            headers.insertBefore(headerDE, headerDTM);
+            const showDamageEfficiency = await getShowDamageEfficiencyFlag();
+            console.log("show damage efficiency")
+            console.log(showDamageEfficiency);
 
-            let headerDAPercent = headerDAM.cloneNode(true);
-            headerDAPercent.getElementsByClassName("tip")[0].innerText = "DA%";
-            headerDAPercent.getElementsByClassName("tip")[0].setAttribute("data-original-title", `Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage`); //`Damage Done over Total ${teamOrTotalDamage ? "Match" : "Team"} Damage (Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage)`
-            headers.insertBefore(headerDAPercent, headerDAM);
+            const showDamagePercent = await getShowDamagePercentFlag();
+
+            if (showDamageEfficiency) {
+                let headerDE = headerDTM.cloneNode(true);
+                headerDE.getElementsByClassName("tip")[0].innerText = "DE";
+                headerDE.getElementsByClassName("tip")[0].setAttribute("data-original-title", "Damage / Damage Taken"); //"Damage Efficiency (Damage / Damage Taken)"
+                headers.insertBefore(headerDE, headerDTM);
+            }
+
+            if (showDamagePercent) {
+                let headerDAPercent = headerDAM.cloneNode(true);
+                headerDAPercent.getElementsByClassName("tip")[0].innerText = "DA%";
+                headerDAPercent.getElementsByClassName("tip")[0].setAttribute("data-original-title", `Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage`); //`Damage Done over Total ${teamOrTotalDamage ? "Match" : "Team"} Damage (Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage)`
+                headers.insertBefore(headerDAPercent, headerDAM);
+            }
 
             //let DAtotal = parseInt(DARed) + parseInt(DABlu);
 
             Array.from(rows)
-                .forEach(processRow, [DARed, DABlu, teamOrTotalDamage]);
+                .forEach(processRow, [DARed, DABlu, teamOrTotalDamage, showDamageEfficiency, showDamagePercent]);
 
             //heals received per minute
             let logtime = document.getElementById("log-length");
-
+            
             let heal_panels = document.getElementsByClassName("healspread")[0];
             let heal_healtables = heal_panels.getElementsByClassName("healtable");
-            //console.log("yes")
-            //console.log(heal_healtables.length)
-            let heal_headerblu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-            let heal_headerred = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-            let heal_headerbluheals = heal_headerblu.getElementsByTagName("th")[2];
-            let heal_headerredheals = heal_headerred.getElementsByTagName("th")[2];
 
-            //let heal_medstats = table.getElementsByClassName("medstats")
-            //let heal_medstats
+            const showPlayerHPM = await getShowPlayerHPMFlag();
 
-            let HealsBlu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-            //console.log(HealsBlu.length)
-            //console.log("yes")
-            //console.log(HealsBlu[1].getElementsByTagName("td")[2].innerText)
-            let HealsRed = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-            //console.log(HealsRed.length)
+            if (showPlayerHPM) {
+                //console.log("yes")
+                //console.log(heal_healtables.length)
+                let heal_headerblu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
+                let heal_headerred = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
+                let heal_headerbluheals = heal_headerblu.getElementsByTagName("th")[2];
+                let heal_headerredheals = heal_headerred.getElementsByTagName("th")[2];
 
-            let HPMHeaderBlu = heal_headerbluheals.cloneNode(true);
-            HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
-            HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
-            HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
-            heal_headerblu.insertBefore(HPMHeaderBlu, heal_headerblu.getElementsByTagName("th")[3]);
+                //let heal_medstats = table.getElementsByClassName("medstats")
+                //let heal_medstats
 
-            let HPMHeaderRed = heal_headerredheals.cloneNode(true);
-            HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
-            HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
-            HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
-            heal_headerred.insertBefore(HPMHeaderRed, heal_headerred.getElementsByTagName("th")[3]);
+                let HealsBlu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+                //console.log(HealsBlu.length)
+                //console.log("yes")
+                //console.log(HealsBlu[1].getElementsByTagName("td")[2].innerText)
+                let HealsRed = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+                //console.log(HealsRed.length)
 
-            //let HealsBluTotal = parseInt(HealsBlu);
-            //console.log("healsblutotal")
-            //console.log(HealsBluTotal)
-            //let HealsRedTotal = parseInt(HealsRed);
+                let HPMHeaderBlu = heal_headerbluheals.cloneNode(true);
+                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
+                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
+                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
+                heal_headerblu.insertBefore(HPMHeaderBlu, heal_headerblu.getElementsByTagName("th")[3]);
 
-            for (i = 0; i < HealsBlu.length; i++) {
-                let HPMBlu = HealsBlu[i].getElementsByTagName("td")[2].cloneNode(true);
-                //console.log(i)
-                HPMBlu.innerText = (parseFloat(HealsBlu[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
-                //console.log(HPMBlu.innerText)
-                HealsBlu[i].insertBefore(HPMBlu, HealsBlu[i].getElementsByTagName("td")[3])
+                let HPMHeaderRed = heal_headerredheals.cloneNode(true);
+                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
+                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
+                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
+                heal_headerred.insertBefore(HPMHeaderRed, heal_headerred.getElementsByTagName("th")[3]);
+
+                //let HealsBluTotal = parseInt(HealsBlu);
+                //console.log("healsblutotal")
+                //console.log(HealsBluTotal)
+                //let HealsRedTotal = parseInt(HealsRed);
+
+                for (i = 0; i < HealsBlu.length; i++) {
+                    let HPMBlu = HealsBlu[i].getElementsByTagName("td")[2].cloneNode(true);
+                    //console.log(i)
+                    HPMBlu.innerText = (parseFloat(HealsBlu[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
+                    //console.log(HPMBlu.innerText)
+                    HealsBlu[i].insertBefore(HPMBlu, HealsBlu[i].getElementsByTagName("td")[3])
+                }
+
+                for (i = 0; i < HealsRed.length; i++) {
+                    let HPMRed = HealsRed[i].getElementsByTagName("td")[2].cloneNode(true);
+                    //console.log(i)
+                    HPMRed.innerText = (parseFloat(HealsRed[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
+                    //console.log(HPMRed.innerText)
+                    HealsRed[i].insertBefore(HPMRed, HealsRed[i].getElementsByTagName("td")[3])
+                }
+
+                //console.log("width");
+                //console.log(heal_healtables[0].style);
+                heal_healtables[0].style.width = "350px";
+                heal_healtables[1].style.width = "350px";
             }
 
-            for (i = 0; i < HealsRed.length; i++) {
-                let HPMRed = HealsRed[i].getElementsByTagName("td")[2].cloneNode(true);
-                //console.log(i)
-                HPMRed.innerText = (parseFloat(HealsRed[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
-                //console.log(HPMRed.innerText)
-                HealsRed[i].insertBefore(HPMRed, HealsRed[i].getElementsByTagName("td")[3])
-            }
+            const showMedicHPMA = await getShowMedicHPMAFlag();
+            if (showMedicHPMA) {
+                //console.log(pageURL.lastIndexOf("#"))
+                const curLogID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
+                //console.log("logid");
+                //console.log(curLogID);
+                const logInfoStorage = window.sessionStorage.getItem(curLogID);
+                let logInfo;
+                if (logInfoStorage) {
+                    console.log("using saved info")
+                    logInfo = JSON.parse(logInfoStorage);
+                } else {
+                    console.log("logging new info")
+                    logInfo = await processLogInfo(curLogID);
+                if (logInfo === "ratelimited") {
+                    let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
+                    heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Rate limited, wait a few seconds and refresh the page"><strong>ERROR</strong></span>`
+                    return;
+                }
 
-            //console.log("width");
-            //console.log(heal_healtables[0].style);
-            heal_healtables[0].style.width = "350px";
-            heal_healtables[1].style.width = "350px";
+                    window.sessionStorage.setItem(curLogID, JSON.stringify(logInfo));
+                }
 
-            //console.log(pageURL.lastIndexOf("#"))
-            const curLogID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
-            //console.log("logid");
-            //console.log(curLogID);
-            const logInfoStorage = window.sessionStorage.getItem(curLogID);
-            let logInfo;
-            if (logInfoStorage) {
-                console.log("using saved info")
-                logInfo = JSON.parse(logInfoStorage);
-            } else {
-                console.log("logging new info")
-                logInfo = await processLogInfo(curLogID);
-            if (logInfo === "ratelimited") {
-                let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
-                heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Rate limited, wait a few seconds and refresh the page"><strong>ERROR</strong></span>`
-                return;
-            }
+                let bluSteamID3;
+                let redSteamID3;
+                let bluMedicTimePlayed;
+                let redMedicTimePlayed;
+                let bluMedicDeaths;
+                let redMedicDeaths;
+                const bluUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("blu")[0].innerText;
+                const redUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("red")[0].innerText;
 
-                window.sessionStorage.setItem(curLogID, JSON.stringify(logInfo));
-            }
-
-            let bluSteamID3;
-            let redSteamID3;
-            let bluMedicTimePlayed;
-            let redMedicTimePlayed;
-            let bluMedicDeaths;
-            let redMedicDeaths;
-            const bluUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("blu")[0].innerText;
-            const redUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("red")[0].innerText;
-
-            const listOfSteamIDs = Object.keys(logInfo.names);
-            const listOfNames = logInfo.names;
-            for (i = 0; i < listOfSteamIDs.length; i++) {
-                if (listOfNames[listOfSteamIDs[i]] === bluUsername) {
-                    bluSteamID3 = listOfSteamIDs[i]
-                    const bluMedicClassesPlayed = logInfo.players[bluSteamID3].class_stats;
-                    for (j = 0; j < bluMedicClassesPlayed.length; j++) {
-                        if (bluMedicClassesPlayed[j].type === "medic") {
-                            bluMedicTimePlayed = bluMedicClassesPlayed[j].total_time
-                            bluMedicDeaths = bluMedicClassesPlayed[j].deaths
-                        };
-                    }
-                } else if (listOfNames[listOfSteamIDs[i]] === redUsername) {
-                    redSteamID3 = listOfSteamIDs[i]
-                    const redMedicClassesPlayed = logInfo.players[redSteamID3].class_stats;
-                    for (j = 0; j < redMedicClassesPlayed.length; j++) {
-                        if (redMedicClassesPlayed[j].type === "medic") {
-                            redMedicTimePlayed = redMedicClassesPlayed[j].total_time
-                            redMedicDeaths = redMedicClassesPlayed[j].deaths
-                        };
-                    }
-                };
-            }
-        
-            //const playerInfo = logInfo.players[steamID3];
+                const listOfSteamIDs = Object.keys(logInfo.names);
+                const listOfNames = logInfo.names;
+                for (i = 0; i < listOfSteamIDs.length; i++) {
+                    if (listOfNames[listOfSteamIDs[i]] === bluUsername) {
+                        bluSteamID3 = listOfSteamIDs[i]
+                        const bluMedicClassesPlayed = logInfo.players[bluSteamID3].class_stats;
+                        for (j = 0; j < bluMedicClassesPlayed.length; j++) {
+                            if (bluMedicClassesPlayed[j].type === "medic") {
+                                bluMedicTimePlayed = bluMedicClassesPlayed[j].total_time
+                                bluMedicDeaths = bluMedicClassesPlayed[j].deaths
+                            };
+                        }
+                    } else if (listOfNames[listOfSteamIDs[i]] === redUsername) {
+                        redSteamID3 = listOfSteamIDs[i]
+                        const redMedicClassesPlayed = logInfo.players[redSteamID3].class_stats;
+                        for (j = 0; j < redMedicClassesPlayed.length; j++) {
+                            if (redMedicClassesPlayed[j].type === "medic") {
+                                redMedicTimePlayed = redMedicClassesPlayed[j].total_time
+                                redMedicDeaths = redMedicClassesPlayed[j].deaths
+                            };
+                        }
+                    };
+                }
             
-            let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
-            let heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
+                //const playerInfo = logInfo.players[steamID3];
+                
+                let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
+                let heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
 
-            const heal_bluheals = heal_medvalblu.innerHTML.substring(heal_medvalblu.innerHTML.indexOf("strong") + 7, heal_medvalblu.innerHTML.lastIndexOf("strong") - 2);
-            //console.log(heal_bluheals);
-            const heal_blutimealive = bluMedicTimePlayed - (14 * bluMedicDeaths);
-            const heal_bluhealsperminutealive = heal_bluheals / (heal_blutimealive / 60);
-            //console.log(heal_bluhealsperminutealive);
+                const heal_bluheals = heal_medvalblu.innerHTML.substring(heal_medvalblu.innerHTML.indexOf("strong") + 7, heal_medvalblu.innerHTML.lastIndexOf("strong") - 2);
+                //console.log(heal_bluheals);
+                const heal_blutimealive = bluMedicTimePlayed - (14 * bluMedicDeaths);
+                const heal_bluhealsperminutealive = heal_bluheals / (heal_blutimealive / 60);
+                //console.log(heal_bluhealsperminutealive);
 
-            //const bluHPMAElement = this.document.createElement("td");
-            //bluHPMAElement.classList.add("tip");
-            //bluHPMAElement.innerHTML = `(${heal_bluhealsperminutealive.toFixed(0)}/m alive)`;
-            ////bluHPMAElement.setAttribute("style", )
-            //bluHPMAElement.style.textAlign = "right !important";
-            //bluHPMAElement.style.width = "auto !important";
-            //bluHPMAElement.style.borderWidth = "0.8";
-            //bluHPMAElement.style.padding = "0px !important";
-            //bluHPMAElement.setAttribute("data-original-title", "Heals Per Minute Alive<br>(Estimates 14s Respawn Time per Death)");
+                //const bluHPMAElement = this.document.createElement("td");
+                //bluHPMAElement.classList.add("tip");
+                //bluHPMAElement.innerHTML = `(${heal_bluhealsperminutealive.toFixed(0)}/m alive)`;
+                ////bluHPMAElement.setAttribute("style", )
+                //bluHPMAElement.style.textAlign = "right !important";
+                //bluHPMAElement.style.width = "auto !important";
+                //bluHPMAElement.style.borderWidth = "0.8";
+                //bluHPMAElement.style.padding = "0px !important";
+                //bluHPMAElement.setAttribute("data-original-title", "Heals Per Minute Alive<br>(Estimates 14s Respawn Time per Death)");
 
-            //heal_medvalblu.appendChild(bluHPMAElement)
+                //heal_medvalblu.appendChild(bluHPMAElement)
 
-            heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_bluhealsperminutealive.toFixed(0)}/m alive)</span>`
+                heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_bluhealsperminutealive.toFixed(0)}/m alive)</span>`
 
-            const heal_redheals = heal_medvalred.innerHTML.substring(heal_medvalred.innerHTML.indexOf("strong") + 7, heal_medvalred.innerHTML.lastIndexOf("strong") - 2);
-            //console.log(heal_redheals);
-            const heal_redtimealive = redMedicTimePlayed - (14 * redMedicDeaths);
-            const heal_redhealsperminutealive = heal_redheals / (heal_redtimealive / 60);
-            //console.log(heal_redhealsperminutealive);
+                const heal_redheals = heal_medvalred.innerHTML.substring(heal_medvalred.innerHTML.indexOf("strong") + 7, heal_medvalred.innerHTML.lastIndexOf("strong") - 2);
+                //console.log(heal_redheals);
+                const heal_redtimealive = redMedicTimePlayed - (14 * redMedicDeaths);
+                const heal_redhealsperminutealive = heal_redheals / (heal_redtimealive / 60);
+                //console.log(heal_redhealsperminutealive);
 
-            heal_medvalred.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_redhealsperminutealive.toFixed(0)}/m alive)</span>`
+                heal_medvalred.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_redhealsperminutealive.toFixed(0)}/m alive)</span>`
+            }
         }
     }
 }
 
-function processRow(el, index, array) {
-    let DTM = el.getElementsByTagName("td")[12];
-    let DAM = el.getElementsByTagName("td")[8];
-    let DT = el.getElementsByTagName("td")[11];
-    let DA = el.getElementsByTagName("td")[7];
-    let team = el.getElementsByTagName("td")[1].innerText;
-    let DARed = this[0];
-    let DABlu = this[1];
-    let teamOrTotalDamage = this[2];
+async function processRow(el, index, array) {
+    const DTM = el.getElementsByTagName("td")[12];
+    const DAM = el.getElementsByTagName("td")[8];
+    const DT = el.getElementsByTagName("td")[11];
+    const DA = el.getElementsByTagName("td")[7];
+    const team = el.getElementsByTagName("td")[1].innerText;
+    const DARed = this[0];
+    const DABlu = this[1];
+    const teamOrTotalDamage = this[2];
+    const showDamageEfficiency = this[3];
+    const showDamagePercent = this[4];
 
 	//console.log("start enhancer logging");
     //console.log(team);
@@ -1295,18 +1340,22 @@ function processRow(el, index, array) {
     //console.log(DTM.innerText);
 	//console.log("end enhancer logging");
 
-    let DE = DT.cloneNode(true);
-    //DE.setAttribute("data-original-title", "Damage Efficiency");
-    DE.innerText = (parseFloat(DA.innerText) / parseFloat(DT.innerText))
-        .toFixed(2);
-    el.insertBefore(DE, DTM);
+    if (showDamageEfficiency) {
+        let DE = DT.cloneNode(true);
+        //DE.setAttribute("data-original-title", "Damage Efficiency");
+        DE.innerText = (parseFloat(DA.innerText) / parseFloat(DT.innerText))
+            .toFixed(2);
+        el.insertBefore(DE, DTM);
+    }
 
-    let DAPercent = DT.cloneNode(true);
-    let DATotal = teamOrTotalDamage ? parseFloat(DARed) + parseFloat(DABlu) : team === "RED" ? DARed : DABlu;
-    //console.log(DATotal);
-    DAPercent.innerText = (((parseFloat(DA.innerText) / parseFloat(DATotal)) * 100)
-        .toFixed(1)) + "%";
-    el.insertBefore(DAPercent, DAM);
+    if (showDamagePercent) {
+        let DAPercent = DT.cloneNode(true);
+        let DATotal = teamOrTotalDamage ? parseFloat(DARed) + parseFloat(DABlu) : team === "RED" ? DARed : DABlu;
+        //console.log(DATotal);
+        DAPercent.innerText = (((parseFloat(DA.innerText) / parseFloat(DATotal)) * 100)
+            .toFixed(1)) + "%";
+        el.insertBefore(DAPercent, DAM);
+    }
 }
 
 //function processRowBlu(el, index, array) {
