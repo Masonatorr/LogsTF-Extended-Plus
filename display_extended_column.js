@@ -670,15 +670,20 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 	const gamemode = numPlayers < 16 && numPlayers >= 10 ? "6s" : numPlayers >= 16 && numPlayers < 22 ? "HL" : null;
     //console.log(gamemode)
 	currentBrowser.storage.local.set({playedGamemode: gamemode});
+    
+    const showETF2L = await getShowETF2LFlag();
+    const showRGL = await getShowRGLFlag();
+    const showRGLTeam = await getShowRGLTeamFlag();
+    const showRGLDivision = await getShowRGLDivisionFlag();
 	
 	if (gamemode === "6s" || gamemode === "HL")
 	{
-		rglNameHeader.innerHTML = `<span style="background-color:rgb(144, 238, 144);">ETF2L</span>/<span style="background-color:rgb(255, 203, 108);">RGL</span> + RGL ${gamemode} Division`;
-		if (await getShowRGLTeamFlag()) rglNameHeader.innerHTML = `<span style="background-color:rgb(252, 180, 46);">RGL Team</span> + `.concat(rglNameHeader.innerHTML);
+		rglNameHeader.innerHTML = `${showRGLTeam ? '<span style="background-color:rgb(252, 180, 46);">RGL Team</span>' : ''}${showRGLTeam && (showETF2L || showRGL || showRGLDivision) ? ' + ' : ''}${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}${showETF2L && showRGL ? '/' : ''}${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}${(showETF2L || showRGL) && showRGLDivision ? ' + ' : ''}${showRGLDivision ? 'RGL ' + gamemode + ' Division' : ''}`;
+		//if (await getShowRGLTeamFlag()) rglNameHeader.innerHTML = `<span style="background-color:rgb(252, 180, 46);">RGL Team</span> + `.concat(rglNameHeader.innerHTML);
 	}
 	else
 	{
-		rglNameHeader.innerHTML = `<span style="background-color:rgb(144, 238, 144);">ETF2L</span>/<span style="background-color:rgb(255, 203, 108);">RGL</span>`;
+		rglNameHeader.innerHTML = `${showRGLTeam ? '<span style="background-color:rgb(252, 180, 46);">RGL Team</span>' : ''}${showRGLTeam && (showETF2L || showRGL) ? ' + ' : ''}${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}${showETF2L && showRGL ? '/' : ''}${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
 	}
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
