@@ -1062,7 +1062,7 @@ const deleteIconPopover = () => {
 
 const pageURL = document.URL
 console.log(pageURL);
-window.localStorage.clear();
+//window.localStorage.clear();
 if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
     if (pageURL.includes("profile")) {
         //console.log(pageURL);
