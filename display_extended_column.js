@@ -1082,28 +1082,30 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         //console.log(pageURL);
         console.log("Parsing single log stats and info!")
 
-        const mainElement = document.getElementsByClassName("container main")[0];
-        mainElement.style = "width: 1400px !important;";
+        if (!isFirefox) {
+            const mainElement = document.getElementsByClassName("container main")[0];
+            mainElement.style = "width: 1400px !important;";
 
-        const tableBody = document.getElementById("players");
+            const tableBody = document.getElementById("players");
 
-        const playerTableHead = tableBody.children[0].firstElementChild;
-        const playerTableBody = tableBody.children[1];
+            const playerTableHead = tableBody.children[0].firstElementChild;
+            const playerTableBody = tableBody.children[1];
 
-        const rglNameHeader = document.createElement("th");
+            const rglNameHeader = document.createElement("th");
 
-        playerTableHead.insertBefore(rglNameHeader, playerTableHead.firstChild);
+            playerTableHead.insertBefore(rglNameHeader, playerTableHead.firstChild);
 
-        const playerRows = playerTableBody.children;
+            const playerRows = playerTableBody.children;
 
-        for (let i = 0; i < playerRows.length; i++) {
-            const leagueData = document.createElement("td");
-            // rglName.innerHTML = "Loading...";
-            leagueData.innerHTML = "";
-            playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
+            for (let i = 0; i < playerRows.length; i++) {
+                const leagueData = document.createElement("td");
+                // rglName.innerHTML = "Loading...";
+                leagueData.innerHTML = "";
+                playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
+            }
+
+            updatePlayerRows(playerRows, rglNameHeader);
         }
-
-        updatePlayerRows(playerRows, rglNameHeader);
     } else {
         console.log("Nothing to do on this page")
     }
@@ -1120,6 +1122,32 @@ window.onload = async function() {
 
         } else if (pageURL.length > 17) {
             console.log("onload singlelog")
+
+            if (isFirefox) {
+                const mainElement = document.getElementsByClassName("container main")[0];
+                mainElement.style = "width: 1400px !important;";
+
+                const tableBody = document.getElementById("players");
+
+                const playerTableHead = tableBody.children[0].firstElementChild;
+                const playerTableBody = tableBody.children[1];
+
+                const rglNameHeader = document.createElement("th");
+
+                playerTableHead.insertBefore(rglNameHeader, playerTableHead.firstChild);
+
+                const playerRows = playerTableBody.children;
+
+                for (let i = 0; i < playerRows.length; i++) {
+                    const leagueData = document.createElement("td");
+                    // rglName.innerHTML = "Loading...";
+                    leagueData.innerHTML = "";
+                    playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
+                }
+
+                updatePlayerRows(playerRows, rglNameHeader);
+            }
+
             //damage % and damage efficiency
             let table = document.getElementById("players");
             let headers = table.getElementsByClassName("tablesorter-headerRow")[0];
