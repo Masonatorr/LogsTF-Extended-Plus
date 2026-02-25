@@ -23,7 +23,7 @@ async function setRGLTeamValue(newValue) {
 
 async function setRGLDivisionValue(newValue) {
     await currentBrowser.storage.local.set({
-        showRGLTeam: newValue
+        showRGLDivision: newValue
     });
 }
 
