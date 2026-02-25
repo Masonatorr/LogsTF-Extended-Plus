@@ -1092,7 +1092,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
         if (!isFirefox) {
             const mainElement = document.getElementsByClassName("container main")[0];
-            mainElement.style = "width: 1400px !important;";
+            mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
 
             const tableBody = document.getElementById("players");
 
@@ -1133,7 +1133,7 @@ window.onload = async function() {
 
             if (isFirefox) {
                 const mainElement = document.getElementsByClassName("container main")[0];
-                mainElement.style = "width: 1400px !important;";
+                mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
 
                 const tableBody = document.getElementById("players");
 
