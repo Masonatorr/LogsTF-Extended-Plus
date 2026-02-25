@@ -21,6 +21,12 @@ async function setRGLTeamValue(newValue) {
     });
 }
 
+async function setRGLDivisionValue(newValue) {
+    await currentBrowser.storage.local.set({
+        showRGLTeam: newValue
+    });
+}
+
 async function setGetHighestDivision(newValue, grid) {
     await currentBrowser.storage.local.set({
         getHighestDivisionPlayed: newValue
@@ -224,6 +230,11 @@ async function populateRGLTeamCheckbox(rglTeamInput) {
     rglTeamInput.checked = showRGLTeam.showRGLTeam;
 }
 
+async function populateRGLDivisionCheckbox(rglDivisionInput) {
+    const showRGLDivision = await currentBrowser.storage.local.get("showRGLDivision");
+    rglDivisionInput.checked = showRGLDivision.showRGLDivision;
+}
+
 async function populateHighestDivisionPlayedToggle(getHighestDivisonPlayedInput, grid) {
     const getHighestDivisionPlayed = await currentBrowser.storage.local.get("getHighestDivisionPlayed");
     const value = getHighestDivisionPlayed.getHighestDivisionPlayed
@@ -336,6 +347,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const etf2lInput = document.getElementById("etf2l-input");
     const rglInput = document.getElementById("rgl-input");
     const rglTeamInput = document.getElementById("rgl-team-input");
+    const rglDivisionInput = document.getElementById("rgl-division-input");
     const getHighestDivisionPlayedInput = document.getElementById("get-highest-division-toggle");
     const getHighestDivisionPlayedGrid = document.getElementById("division-toggle-grid");
 
@@ -360,6 +372,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateETF2LCheckbox(etf2lInput);
     populateRGLCheckbox(rglInput);
     populateRGLTeamCheckbox(rglTeamInput);
+    populateRGLDivisionCheckbox(rglDivisionInput);
     populateHighestDivisionPlayedToggle(getHighestDivisionPlayedInput, getHighestDivisionPlayedGrid);
 
     populateDamagePercentTotalOrTeamToggle(damagePercentTotalOrTeamInput, damagePercentTotalOrTeamGrid);
@@ -378,6 +391,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     etf2lInput.addEventListener("change", (e) => setETF2LValue(e.target.checked));
     rglInput.addEventListener("change", (e) => setRGLValue(e.target.checked));
     rglTeamInput.addEventListener("change", (e) => setRGLTeamValue(e.target.checked));
+    rglDivisionInput.addEventListener("change", (e) => setRGLDivisionValue(e.target.checked));
     getHighestDivisionPlayedInput.addEventListener("change", (e) => setGetHighestDivision(e.target.checked, getHighestDivisionPlayedGrid));
 
     damagePercentTotalOrTeamInput.addEventListener("change", (e) => setDamagePercentTotalOrTeam(e.target.checked, damagePercentTotalOrTeamGrid));

@@ -138,6 +138,9 @@ currentBrowser.runtime.onInstalled.addListener(async () => {
     await currentBrowser.storage.local.set({
         showRGLTeam: true
     });
+    await currentBrowser.storage.local.set({
+        showRGLDivision: true
+    });
 
     //stat settings
     await currentBrowser.storage.local.set({

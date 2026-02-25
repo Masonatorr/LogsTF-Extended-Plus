@@ -20,6 +20,8 @@ const getShowRGLFlag = async () => (await currentBrowser.storage.local.get("show
     .showRGL;
 const getShowRGLTeamFlag = async () => (await currentBrowser.storage.local.get("showRGLTeam"))
     .showRGLTeam;
+const getShowRGLDivisionFlag = async () => (await currentBrowser.storage.local.get("showRGLDivision"))
+    .showRGLDivision;
 const getHighestDivisionPlayedFlag = async () =>
     (await currentBrowser.storage.local.get("getHighestDivisionPlayed"))
     .getHighestDivisionPlayed;
@@ -720,11 +722,12 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         const showETF2L = await getShowETF2LFlag();
         const showRGL = await getShowRGLFlag();
         const showRGLTeam = await getShowRGLTeamFlag();
+        const showRGLDivision = await getShowRGLDivisionFlag();
 
         showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
         showETF2L && updateETF2LNameOnPage(steamID, playerInfo, leagueElement);
         showRGL && updateRGLName(steamID, playerInfo, leagueElement, gamemode);
-        showRGL && updateRGLDivisionOnPage(playerInfo, leagueElement);
+        showRGLDivision && updateRGLDivisionOnPage(playerInfo, leagueElement);
     };
     // Profiles have local versions that might need updating
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
