@@ -55,8 +55,28 @@ const getRGLProfile = async (steamID) => {
     return await response.json();
 };
 
-const GetETF2LProfile = async (steamID) => {
+const getETF2LProfile = async (steamID) => {
     const uriETF2L = `https://api-v2.etf2l.org/player/${steamID}`;
+
+    await timer(500);
+    let response = await fetch(uriETF2L);
+    if (checkForErrors(response) === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${3000 * (i + 1)}ms`);
+            await timer(3000 * (i + 1));
+            response = await fetch(uriETF2L);
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (checkForErrors(response)) {
+        return;
+    }
+
+    return await response.json();
+};
+
+const getETF2LPastTeams = async (steamID) => {
+    const uriETF2L = `https://api-v2.etf2l.org/player/${steamID}/transfers`;
 
     await timer(500);
     let response = await fetch(uriETF2L);
@@ -105,7 +125,7 @@ const getAllData = async (ID, messageType) => {
     }
 	else if (messageType === "etf2l_profile")
 	{
-    	data = await GetETF2LProfile(ID);
+    	data = await getETF2LProfile(ID);
 		console.log("ETF2L Profile")
 		console.log(data)
     }
@@ -113,6 +133,12 @@ const getAllData = async (ID, messageType) => {
 	{
     	data = await getRGLPastTeams(ID);
 		console.log("RGL Past Teams")
+		console.log(data)
+    }
+	else if (messageType === "etf2l_past_teams")
+	{
+    	data = await getETF2LPastTeams(ID);
+		console.log("ETF2L Past Teams")
 		console.log(data)
     }
 	else if (messageType === "log_info")
@@ -127,19 +153,31 @@ const getAllData = async (ID, messageType) => {
 currentBrowser.runtime.onInstalled.addListener(async () => {
     //div settings
     await currentBrowser.storage.local.set({
-        showRGL: true
-    });
-    await currentBrowser.storage.local.set({
         showETF2L: true
     });
     await currentBrowser.storage.local.set({
-        getHighestDivisionPlayed: true
+        showETF2LName: true
+    });
+    await currentBrowser.storage.local.set({
+        showETF2LTeam: true
+    });
+    await currentBrowser.storage.local.set({
+        showETF2LDivision: true
+    });
+    await currentBrowser.storage.local.set({
+        showRGL: true
+    });
+    await currentBrowser.storage.local.set({
+        showRGLName: true
     });
     await currentBrowser.storage.local.set({
         showRGLTeam: true
     });
     await currentBrowser.storage.local.set({
         showRGLDivision: true
+    });
+    await currentBrowser.storage.local.set({
+        getHighestDivisionPlayed: true
     });
 
     //stat settings

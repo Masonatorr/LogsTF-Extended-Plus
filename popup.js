@@ -7,11 +7,39 @@ async function setETF2LValue(newValue) {
     await currentBrowser.storage.local.set({
         showETF2L: newValue
     });
+
+    const dropdownDiv = document.getElementsByClassName("etf2l-dropdown-div")[0];
+
+    dropdownDiv.style.maxHeight = newValue ? `${dropdownDiv.scrollHeight}px` : "0px";
+}
+
+async function setETF2LNameValue(newValue) {
+    await currentBrowser.storage.local.set({
+        showETF2LName: newValue
+    });
+}
+
+async function setETF2LTeamValue(newValue) {
+    await currentBrowser.storage.local.set({
+        showETF2LTeam: newValue
+    });
+}
+
+async function setETF2LDivisionValue(newValue) {
+    await currentBrowser.storage.local.set({
+        showETF2LDivision: newValue
+    });
 }
 
 async function setRGLValue(newValue) {
     await currentBrowser.storage.local.set({
         showRGL: newValue
+    });
+}
+
+async function setRGLNameValue(newValue) {
+    await currentBrowser.storage.local.set({
+        showRGLName: newValue
     });
 }
 
@@ -217,12 +245,34 @@ async function setShowClassesPlayed(newValue) {
 
 async function populateETF2LCheckbox(etf2lInput) {
     const showETF2L = await currentBrowser.storage.local.get("showETF2L");
-    etf2lInput.checked = showETF2L.showETF2L;
+    const value = showETF2L.showETF2L;
+    etf2lInput.checked = value;
+    setETF2LValue(value)
+}
+
+async function populateETF2LNameCheckbox(etf2lNameInput) {
+    const showETF2LName = await currentBrowser.storage.local.get("showETF2LName");
+    etf2lNameInput.checked = showETF2LName.showETF2LName;
+}
+
+async function populateETF2LTeamCheckbox(etf2lTeamInput) {
+    const showETF2LTeam = await currentBrowser.storage.local.get("showETF2LTeam");
+    etf2lTeamInput.checked = showETF2LTeam.showETF2LTeam;
+}
+
+async function populateETF2LDivisionCheckbox(etf2lDivisionInput) {
+    const showETF2LDivision = await currentBrowser.storage.local.get("showETF2LDivision");
+    etf2lDivisionInput.checked = showETF2LDivision.showETF2LDivision;
 }
 
 async function populateRGLCheckbox(rglInput) {
     const showRGL = await currentBrowser.storage.local.get("showRGL");
     rglInput.checked = showRGL.showRGL;
+}
+
+async function populateRGLNameCheckbox(rglNameInput) {
+    const showRGLName = await currentBrowser.storage.local.get("showRGLName");
+    rglNameInput.checked = showRGLName.showRGLName;
 }
 
 async function populateRGLTeamCheckbox(rglTeamInput) {
@@ -344,8 +394,12 @@ async function populateShowClassesPlayed(showClassesPlayedInput) {
 }*/
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const etf2lInput = document.getElementById("etf2l-input");
-    const rglInput = document.getElementById("rgl-input");
+    //const etf2lInput = document.getElementById("etf2l-input");
+    const etf2lNameInput = document.getElementById("etf2l-name-input");
+    const etf2lTeamInput = document.getElementById("etf2l-team-input");
+    const etf2lDivisionInput = document.getElementById("etf2l-division-input");
+    //const rglInput = document.getElementById("rgl-input");
+    const rglNameInput = document.getElementById("rgl-name-input");
     const rglTeamInput = document.getElementById("rgl-team-input");
     const rglDivisionInput = document.getElementById("rgl-division-input");
     const getHighestDivisionPlayedInput = document.getElementById("get-highest-division-toggle");
@@ -369,8 +423,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     populateThemeToggle(themeInput, document);
 
-    populateETF2LCheckbox(etf2lInput);
-    populateRGLCheckbox(rglInput);
+   // populateETF2LCheckbox(etf2lInput);
+    populateETF2LNameCheckbox(etf2lNameInput);
+    populateETF2LTeamCheckbox(etf2lTeamInput);
+    populateETF2LDivisionCheckbox(etf2lDivisionInput);
+    //populateRGLCheckbox(rglInput);
+    populateRGLNameCheckbox(rglNameInput);
     populateRGLTeamCheckbox(rglTeamInput);
     populateRGLDivisionCheckbox(rglDivisionInput);
     populateHighestDivisionPlayedToggle(getHighestDivisionPlayedInput, getHighestDivisionPlayedGrid);
@@ -388,8 +446,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateStatsDropdownToggle(statsDropdownInput, document);
     populateProfileDropdownToggle(profileDropdownInput, document);
 
-    etf2lInput.addEventListener("change", (e) => setETF2LValue(e.target.checked));
-    rglInput.addEventListener("change", (e) => setRGLValue(e.target.checked));
+    //etf2lInput.addEventListener("change", (e) => setETF2LValue(e.target.checked));
+    etf2lNameInput.addEventListener("change", (e) => setETF2LNameValue(e.target.checked));
+    etf2lTeamInput.addEventListener("change", (e) => setETF2LTeamValue(e.target.checked));
+    etf2lDivisionInput.addEventListener("change", (e) => setETF2LDivisionValue(e.target.checked));
+    //rglInput.addEventListener("change", (e) => setRGLValue(e.target.checked));
+    rglNameInput.addEventListener("change", (e) => setRGLNameValue(e.target.checked));
     rglTeamInput.addEventListener("change", (e) => setRGLTeamValue(e.target.checked));
     rglDivisionInput.addEventListener("change", (e) => setRGLDivisionValue(e.target.checked));
     getHighestDivisionPlayedInput.addEventListener("change", (e) => setGetHighestDivision(e.target.checked, getHighestDivisionPlayedGrid));

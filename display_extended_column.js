@@ -6,6 +6,7 @@ const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 const getRGLProfile = async (steamID) => await sendMessageAndWait("rgl_profile", steamID);
 const getETF2LProfile = async (steamID) => await sendMessageAndWait("etf2l_profile", steamID);
 const getRGLPastTeams = async (steamID) => await sendMessageAndWait("rgl_past_teams", steamID);
+const getETF2LPastTeams = async (steamID) => await sendMessageAndWait("etf2l_past_teams", steamID);
 const getLogInfo = async (logID) => await sendMessageAndWait("log_info", logID);
 
 const sendMessageAndWait = async (type, steamID) =>
@@ -14,10 +15,14 @@ const sendMessageAndWait = async (type, steamID) =>
         steamID
     })
 
-const getShowETF2LFlag = async () => (await currentBrowser.storage.local.get("showETF2L"))
-    .showETF2L;
-const getShowRGLFlag = async () => (await currentBrowser.storage.local.get("showRGL"))
-    .showRGL;
+const getShowETF2LNameFlag = async () => (await currentBrowser.storage.local.get("showETF2LName"))
+    .showETF2LName;
+const getShowETF2LTeamFlag = async () => (await currentBrowser.storage.local.get("showETF2LTeam"))
+    .showETF2LTeam;
+const getShowETF2LDivisionFlag = async () => (await currentBrowser.storage.local.get("showETF2LDivision"))
+    .showETF2LDivision;
+const getShowRGLNameFlag = async () => (await currentBrowser.storage.local.get("showRGLName"))
+    .showRGLName;
 const getShowRGLTeamFlag = async () => (await currentBrowser.storage.local.get("showRGLTeam"))
     .showRGLTeam;
 const getShowRGLDivisionFlag = async () => (await currentBrowser.storage.local.get("showRGLDivision"))
@@ -62,6 +67,30 @@ const RGLDivisionsInverse = Object.freeze({
     6: "Invite",
 });
 
+const ETF2LDivisions = Object.freeze({
+    None: 0,
+    Fresh: 1,
+    Open: 2,
+    Low: 3,
+    Division4: 4,
+    Division3: 5,
+    Division2: 6,
+    Division1: 7,
+    Premiership: 8,
+});
+
+const ETF2LDivisionsInverse = Object.freeze({
+    0: "None",
+    1: "Fresh",
+    2: "Open",
+    3: "Low",
+    4: "Division4",
+    5: "Division3",
+    6: "Division2",
+    7: "Division1",
+    8: "Premiership",
+});
+
 const RGLDivisionSpecs = Object.freeze({
     NA: {
         backgroundColor: "#dddddd",
@@ -102,6 +131,59 @@ const RGLDivisionSpecs = Object.freeze({
         backgroundColor: "#e049b2",
         textColor: "white",
         shortenedName: "INV",
+    },
+});
+
+const ETF2LDivisionSpecs = Object.freeze({
+    NA: {
+        backgroundColor: "#dddddd",
+        textColor: "black",
+        shortenedName: "N/A",
+    },
+    None: {
+        backgroundColor: "gray",
+        textColor: "black",
+        shortenedName: "NEW",
+    },
+    Fresh: {
+        backgroundColor: "#c44b36",
+        textColor: "white",
+        shortenedName: "FR",
+    },
+    Open: {
+        backgroundColor: "#cbb934",
+        textColor: "black",
+        shortenedName: "OPEN",
+    },
+    Low: {
+        backgroundColor: "#70d035",
+        textColor: "black",
+        shortenedName: "LOW",
+    },
+    Division4: {
+        backgroundColor: "#3ad470",
+        textColor: "black",
+        shortenedName: "D4",
+    },
+    Division3: {
+        backgroundColor: "#45cad9",
+        textColor: "black",
+        shortenedName: "D3",
+    },
+    Division2: {
+        backgroundColor: "#465fdd",
+        textColor: "white",
+        shortenedName: "D2",
+    },
+    Division1: {
+        backgroundColor: "#9e48e0",
+        textColor: "white",
+        shortenedName: "D1",
+    },
+    Premiership: {
+        backgroundColor: "#e048b2",
+        textColor: "white",
+        shortenedName: "PRM",
     },
 });
 
@@ -365,16 +447,16 @@ const WeaponLookupTable = Object.freeze({
 const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     if (pastTeams === undefined || pastTeams === null || pastTeams.length == 0) return RGLDivisions.None;
 
-    let greatestNumerivalDivisionPlayed = RGLDivisions.None;
+    let greatestNumericalDivisionPlayed = RGLDivisions.None;
     for (let i = 0; i < pastTeams.length; i++) {
         if (pastTeams[i].formatName != gameMode) continue;
 
         const numericalValue = RGLDivisions[pastTeams[i].divisionName];
-        if (greatestNumerivalDivisionPlayed < numericalValue) {
-            greatestNumerivalDivisionPlayed = numericalValue;
+        if (greatestNumericalDivisionPlayed < numericalValue) {
+            greatestNumericalDivisionPlayed = numericalValue;
         }
     }
-    return greatestNumerivalDivisionPlayed;
+    return greatestNumericalDivisionPlayed;
 }
 
 const getLatestDivisionPlayed = (pastTeams, gameMode) => {
@@ -431,11 +513,116 @@ const getCurrentRGLTeam = async (pastTeams) => {
 	];
 }
 
+const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
+	let SixesHighestDiv = null;
+	let SixesLatestDiv = null;
+	let SixesTeam = null;
+	let SixesTeamID = null;
+	let HighlanderHighestDiv = null;
+	let HighlanderLatestDiv = null;
+	let HighlanderTeam = null;
+	let HighlanderTeamID = null;
+
+    if (profile === undefined || profile === null || profile.length === 0) {
+        return [
+	        SixesHighestDiv,
+	        SixesLatestDiv,
+            SixesTeam,
+            SixesTeamID,
+	        HighlanderHighestDiv,
+	        HighlanderLatestDiv,
+            HighlanderTeam,
+            HighlanderTeamID,
+        ];
+    }
+
+    //console.log("etf2l div and team")
+	//console.log(pastTeams);
+
+    //let teamsLeft = []
+	for (let gamemode = 0; gamemode < profile.player.teams.length; gamemode++) {
+		//for (let i = 0; i < pastTeams.length; i++) {
+        //    const curTeam = pastTeams[i];
+        //    if (teamsLeft.includes(curTeam.team.name)) continue;
+        //    if (curTeam.type === "left") {
+        //        teamsLeft.push(curTeam.team.name)
+        //        continue;
+        //    }
+		//	if (curTeam.team.type != (gamemode === 0 ? "6v6" : "Highlander")) continue;
+        //    console.log(curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1))
+		//	if (gamemode === 0) {
+		//		SixesTeam = curTeam.team.name;
+		//		SixesTeamID = curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1);
+		//		break
+		//	} else {
+		//		HighlanderTeam = curTeam.team.name;
+		//		HighlanderTeamID = curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1);
+		//		break
+		//	}
+		//}
+
+        const gamemodeInfo = profile.player.teams[gamemode];
+        //console.log(profile.player.teams[gamemode])
+        //console.log(profile.player.name)
+        const curGamemode = gamemodeInfo.type;
+        if (curGamemode === "6v6") {
+            SixesTeam = gamemodeInfo.name;
+            SixesTeamID = gamemodeInfo.urls.self.substring(gamemodeInfo.urls.self.lastIndexOf("/") + 1);
+
+            const competitionsPlayed = Object.keys(gamemodeInfo.competitions)
+            let highestDiv = null
+            for (let i = competitionsPlayed.length - 1; i >= 0; i--) {
+                curCompetition = gamemodeInfo.competitions[competitionsPlayed[i]];
+                if (curCompetition.division.name != null) {
+                    if (SixesLatestDiv == null) SixesLatestDiv = curCompetition.division.name.replace(/\s/g, '');
+
+                    const divNumber = ETF2LDivisions[curCompetition.division.name];
+                    if (divNumber && divNumber > highestDiv) highestDiv = divNumber;
+                }
+            }
+            SixesHighestDiv = ETF2LDivisionsInverse[highestDiv]
+        } else if (curGamemode === "Highlander") {
+            HighlanderTeam = gamemodeInfo.name;
+            HighlanderTeamID = gamemodeInfo.urls.self.substring(gamemodeInfo.urls.self.lastIndexOf("/") + 1);
+
+            competitionsPlayed = Object.keys(gamemodeInfo.competitions)
+            let highestDiv = null
+            for (let i = competitionsPlayed.length - 1; i >= 0; i--) {
+                curCompetition = gamemodeInfo.competitions[competitionsPlayed[i]];
+                if (curCompetition.division.name != null) {
+                    if (HighlanderLatestDiv == null) HLLatestDiv = curCompetition.division.name.replace(/\s/g, '');
+                    
+                    const divNumber = ETF2LDivisions[curCompetition.division.name];
+                    if (divNumber && divNumber > highestDiv) highestDiv = divNumber;
+                }
+            }
+            HighlanderHighestDiv = ETF2LDivisionsInverse[highestDiv]
+        }
+	}
+
+	//console.log(
+	//	SixesTeam,
+	//	SixesTeamID,
+	//	HighlanderTeam,
+	//	HighlanderTeamID,
+	//)
+	return [
+	    SixesHighestDiv,
+	    SixesLatestDiv,
+        SixesTeam,
+        SixesTeamID,
+	    HighlanderHighestDiv,
+	    HighlanderLatestDiv,
+        HighlanderTeam,
+        HighlanderTeamID,
+	];
+}
+
 // gamemode = "Sixes" or "Highlander"
 // getHighestPlayed
 // true = get the user's highest division played
 // false = latest division played
-const getHighestGamemodeTeam = async (pastTeams) => {
+const getHighestRGLGamemodeTeam = async (pastTeams) => {
     const highestNumericalDivisionPlayed6s = getHighestNumericalDivisionPlayed(pastTeams, "Sixes");
     const latestNumericalDivisionPlayed6s = getLatestDivisionPlayed(pastTeams, "Sixes");
     const highestNumericalDivisionPlayedHL = getHighestNumericalDivisionPlayed(pastTeams, "Highlander");
@@ -496,6 +683,90 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     etf2lLink.style.padding = "6px";
 	if (getShowRGLTeamFlag()) etf2lLink.style.marginLeft = "6px";
     leagueElement.appendChild(etf2lLink);
+
+    const banInfo = playerInfo.etf2l.banInfo;
+    //console.log(`baninfo: ${banInfo}`);
+    if (banInfo == null) return;
+    const banEndDate = banInfo.end;
+    const banWarning = (banEndDate > (Date.now() / 1000));
+
+    if (!banWarning) return;
+
+    const banWarningSpan = document.createElement("span");
+    banWarningSpan.innerHTML = " (BANNED)";
+    etf2lLink.style.backgroundColor = "rgb(137, 0, 0)";
+	//rglLink.style.textColor = "rgb(255, 255, 255)"
+
+    etf2lLink.appendChild(banWarningSpan);
+
+	etf2lLink.style.color = "rgb(255, 255, 255)"
+
+    etf2lLink.classList.add("tip")
+    etf2lLink.setAttribute("data-original-title", `Banned until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason.replace(/\s/g, ' ')}`)
+}
+
+const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
+	//console.log("ran update team")
+	if (!playerInfo.etf2l.name) return;
+    //console.log(`gamemode: ${gamemode}`)
+	const teamName = (gamemode === "6s" ? playerInfo.etf2l.currentTeam6s : playerInfo.etf2l.currentTeamHL);
+	const teamID = (gamemode === "6s" ? playerInfo.etf2l.currentTeamID6s : playerInfo.etf2l.currentTeamIDHL);
+	if (!teamName) return;
+    if (teamName.includes("Free Agent -")) return;
+
+
+	const etf2lTeamLink = document.createElement("a");
+	etf2lTeamLink.innerHTML = teamName;
+	etf2lTeamLink.href = `https://etf2l.org/teams/${teamID}`;
+	etf2lTeamLink.target = "_blank";
+	etf2lTeamLink.style.backgroundColor = "rgb(38, 217, 38)";
+	etf2lTeamLink.style.padding = "6px";
+	etf2lTeamLink.style.marginLeft = "6px";
+
+	leagueElement.appendChild(etf2lTeamLink);
+	
+	//console.log("finished team update")
+
+	//if (!banWarning) return;
+}
+
+const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
+    let division;
+    if (!playerInfo.etf2l.name) {
+        return;
+        //if (!(["6s", "HL"].includes(playedGamemode))) return;
+        //if (!playerInfo.rgl.name) return;
+        //division = "NA";
+    } else {
+        const getHighestDivison = await getHighestDivisionPlayedFlag();
+        //console.log(playedGamemode);
+        division = getHighestDivison ? (playedGamemode === "6s" ? playerInfo.etf2l.division6s : playedGamemode === "HL" ? playerInfo.etf2l.divisionHL : null) : (playedGamemode === "6s" ? playerInfo.etf2l.latestDivision6s : playedGamemode === "HL" ? playerInfo.etf2l.latestDivisionHL : 1);
+        if (division == undefined) division = "None";
+        //console.log(division);
+        if (!ETF2LDivisionSpecs[division]) {
+            console.log(playerInfo);
+            console.log("Error occurred for " + playerInfo.etf2l.name);
+            console.log(`The division is not valid. Division: ${division}`);
+            return;
+        }
+    }
+
+    const etf2lDivisionElement = document.createElement("span");
+    etf2lDivisionElement.style.backgroundColor = ETF2LDivisionSpecs[division].backgroundColor;
+    etf2lDivisionElement.style.color = ETF2LDivisionSpecs[division].textColor;
+    etf2lDivisionElement.style.fontWeight = "bold";
+    etf2lDivisionElement.style.minWidth = "35px";
+    etf2lDivisionElement.style.display = "inline-block";
+    etf2lDivisionElement.style.textAlign = "center";
+    etf2lDivisionElement.innerHTML = ETF2LDivisionSpecs[division].shortenedName;
+    etf2lDivisionElement.style.padding = "2px";
+    etf2lDivisionElement.style.marginLeft = "6px";
+    if (!playerInfo.rgl.name) etf2lDivisionElement.style.marginRight = "-3px";
+    etf2lDivisionElement.style.border = "4px";
+    etf2lDivisionElement.style.borderStyle = "solid";
+    etf2lDivisionElement.style.borderColor = "rgb(144, 238, 144)";
+
+    leagueElement.appendChild(etf2lDivisionElement);
 }
 
 const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode) => {
@@ -522,12 +793,15 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
     rglLink.style.padding = "6px";
     rglLink.style.marginLeft = "6px";
 
-    const banWarning = playerInfo.rgl.isBanned;
+    const banWarning = playerInfo.rgl.banInfo;
+    //console.log(playerInfo)
+    //console.log(steamID)
 
     rglLink.innerHTML = playerInfo.rgl.name;
 
     leagueElement.appendChild(rglLink);
 
+    //console.log("ban warning " + banWarning);
     if (!banWarning) return;
 
     const banWarningSpan = document.createElement("span");
@@ -538,6 +812,10 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
     rglLink.appendChild(banWarningSpan);
 
 	rglLink.style.color = "rgb(255, 255, 255)"
+
+    rglLink.classList.add("tip")
+    //console.log(Date.parse(banWarning.endsAt))
+    rglLink.setAttribute("data-original-title", `Banned until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason.replace(/\s/g, ' ')}`)
 }
 
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
@@ -564,11 +842,11 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	//if (!banWarning) return;
 }
 
-const updateRGLDivisionOnPage = async (playerInfo, leagueElement) => {
-    const playedGamemode = await getPlayedGamemodeFlag();
+const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
     let division;
     if (!playerInfo.rgl.name) {
         if (!(["6s", "HL"].includes(playedGamemode))) return;
+        if (playerInfo.etf2l.name) return;
         division = "NA";
     } else {
         const getHighestDivison = await getHighestDivisionPlayedFlag();
@@ -591,73 +869,127 @@ const updateRGLDivisionOnPage = async (playerInfo, leagueElement) => {
     rglDivisionElement.style.display = "inline-block";
     rglDivisionElement.style.textAlign = "center";
     rglDivisionElement.innerHTML = RGLDivisionSpecs[division].shortenedName;
-    rglDivisionElement.style.padding = "6px";
+    rglDivisionElement.style.padding = !(playerInfo.etf2l.name || playerInfo.rgl.name) ? "6px" : "2px";
     rglDivisionElement.style.marginLeft = "6px";
     rglDivisionElement.style.marginRight = "-3px";
+    if (playerInfo.etf2l.name || playerInfo.rgl.name) {
+        rglDivisionElement.style.border = "4px";
+        rglDivisionElement.style.borderStyle = "solid";
+        rglDivisionElement.style.borderColor = "rgb(252, 179, 44)";
+    }
 
     leagueElement.appendChild(rglDivisionElement);
 }
 
 const fetchPlayerInfo = async (steamID) => {
-    const RGL_profile_data = await getRGLProfile(steamID);
+    const RGLProfile = await getRGLProfile(steamID);
     const ETF2LProfile = await getETF2LProfile(steamID);
-    const pastTeams = await getRGLPastTeams(steamID);
+    const RGLPastTeams = await getRGLPastTeams(steamID);
+    //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
 
-    if ((RGL_profile_data + ETF2LProfile + pastTeams).includes("ratelimited")) return "ratelimited";
+    if ((RGLProfile + ETF2LProfile + RGLPastTeams/* + ETF2LPastTeams*/).includes("ratelimited")) return "ratelimited";
 
     const [
-        highestDivisionString6s,
-        latestDivisionString6s,
-        highestDivisionStringHL,
-        latestDivisionStringHL
-	] = await getHighestGamemodeTeam(pastTeams);
+        RGLHighestDivisionString6s,
+        RGLLatestDivisionString6s,
+        RGLHighestDivisionStringHL,
+        RGLLatestDivisionStringHL
+	] = await getHighestRGLGamemodeTeam(RGLPastTeams);
 
     const localPlayerInfo = window.localStorage.getItem(steamID) ?? null;
 
     const localPlayerInfoJson = JSON.parse(localPlayerInfo);
 
 	const [
-		currentTeamString6s,
-		currentTeamIDString6s,
-		currentTeamStringHL,
-		currentTeamIDStringHL
-	] = await getCurrentRGLTeam(pastTeams);
+		RGLCurrentTeamString6s,
+		RGLCurrentTeamIDString6s,
+		RGLCurrentTeamStringHL,
+		RGLCurrentTeamIDStringHL
+	] = await getCurrentRGLTeam(RGLPastTeams);
+
+    const [
+        ETF2LHighestDivisionString6s,
+        ETF2LLatestDivisionString6s,
+        ETF2LCurrentTeamString6s,
+        ETF2LCurrentTeamIDString6s,
+        ETF2LHighestDivisionStringHL,
+        ETF2LLatestDivisionStringHL,
+        ETF2LCurrentTeamStringHL,
+        ETF2LCurrentTeamIDStringHL,
+    ] = await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
+
+    //console.log([
+    //    ETF2LHighestDivisionString6s,
+    //    ETF2LLatestDivisionString6s,
+    //    ETF2LCurrentTeamString6s,
+    //    ETF2LCurrentTeamIDString6s,
+    //    ETF2LHighestDivisionStringHL,
+    //    ETF2LLatestDivisionStringHL,
+    //    ETF2LCurrentTeamStringHL,
+    //    ETF2LCurrentTeamIDStringHL,
+    //]);
 
 	//console.log(await getCurrentRGLTeam(pastTeams));
 	
 	//console.log(currentTeamString6s);
 
+    //const curTime = Math.floor(Date.now() / 1000);
+    //console.log(RGLProfile)
+    //console.log(RGLProfile ? RGLProfile.status.isBanned : 'no rgl')
+    //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
     const playerInfoToInsert = {
         rgl: {
-            name: RGL_profile_data ? RGL_profile_data.name : localPlayerInfoJson ? localPlayerInfoJson.rgl.name : null,
-            isBanned: RGL_profile_data ?
-                RGL_profile_data.status.isBanned :
+            name: RGLProfile ? RGLProfile.name : localPlayerInfoJson ? localPlayerInfoJson.rgl.name : null,
+            banInfo: RGLProfile ?
+                (RGLProfile.status.isBanned ? RGLProfile.banInformation : false) :
                 localPlayerInfoJson ?
-                localPlayerInfoJson.rgl.isBanned :
+                localPlayerInfoJson.rgl.banInfo :
                 false,
-            division6s: highestDivisionString6s ?
-                highestDivisionString6s :
+            division6s: RGLHighestDivisionString6s ?
+                RGLHighestDivisionString6s :
                 localPlayerInfoJson ?
                 localPlayerInfoJson.rgl.division6s :
                 "None",
-            divisionHL: highestDivisionStringHL ?
-                highestDivisionStringHL :
+            divisionHL: RGLHighestDivisionStringHL ?
+                RGLHighestDivisionStringHL :
                 localPlayerInfoJson ?
                 localPlayerInfoJson.rgl.divisionHL :
                 "None",
-            latestDivision6s: latestDivisionString6s,
-            latestDivisionHL: latestDivisionStringHL,
-			currentTeam6s: currentTeamString6s,
-			currentTeamHL: currentTeamStringHL,
-			currentTeamID6s: currentTeamIDString6s,
-			currentTeamIDHL: currentTeamIDStringHL,
+            latestDivision6s: RGLLatestDivisionString6s,
+            latestDivisionHL: RGLLatestDivisionStringHL,
+			currentTeam6s: RGLCurrentTeamString6s,
+			currentTeamHL: RGLCurrentTeamStringHL,
+			currentTeamID6s: RGLCurrentTeamIDString6s,
+			currentTeamIDHL: RGLCurrentTeamIDStringHL,
         },
         etf2l: {
             name: ETF2LProfile ? ETF2LProfile.player.name : localPlayerInfoJson ? localPlayerInfoJson.etf2l.name : null,
+            banInfo: ETF2LProfile ?
+                (ETF2LProfile.player.bans != null ? ETF2LProfile.player.bans.pop() : null) :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.banInfo :
+                null,
+            division6s: ETF2LHighestDivisionString6s ?
+                ETF2LHighestDivisionString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.division6s :
+                "None",
+            divisionHL: ETF2LHighestDivisionStringHL ?
+                ETF2LHighestDivisionStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.divisionHL :
+                "None",
+            latestDivision6s: ETF2LLatestDivisionString6s,
+            latestDivisionHL: ETF2LLatestDivisionStringHL,
+			currentTeam6s: ETF2LCurrentTeamString6s,
+			currentTeamHL: ETF2LCurrentTeamStringHL,
+			currentTeamID6s: ETF2LCurrentTeamIDString6s,
+			currentTeamIDHL: ETF2LCurrentTeamIDStringHL,
         },
     };
+    //console.log(playerInfoToInsert.rgl.banInfo)
 	//console.log("highestDivisionString6s")
-	console.log(playerInfoToInsert)
+	//console.log(playerInfoToInsert)
     return playerInfoToInsert;
 }
 
@@ -671,19 +1003,35 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
     //console.log(gamemode)
 	currentBrowser.storage.local.set({playedGamemode: gamemode});
     
-    const showETF2L = await getShowETF2LFlag();
-    const showRGL = await getShowRGLFlag();
+    const showETF2L = await getShowETF2LNameFlag();
+    const showETF2LTeam = await getShowETF2LTeamFlag();
+    const showETF2LDivision = await getShowETF2LDivisionFlag();
+    const showRGL = await getShowRGLNameFlag();
     const showRGLTeam = await getShowRGLTeamFlag();
     const showRGLDivision = await getShowRGLDivisionFlag();
 	
 	if (gamemode === "6s" || gamemode === "HL")
 	{
-		rglNameHeader.innerHTML = `${showRGLTeam ? '<span style="background-color:rgb(252, 180, 46);">RGL Team</span>' : ''}${showRGLTeam && (showETF2L || showRGL || showRGLDivision) ? ' + ' : ''}${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}${showETF2L && showRGL ? '/' : ''}${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}${(showETF2L || showRGL) && showRGLDivision ? ' + ' : ''}${showRGLDivision ? 'RGL ' + gamemode + ' Division' : ''}`;
+		rglNameHeader.innerHTML =  `${showETF2LTeam ? '<span style="background-color:rgb(38, 217, 38);">ETF2L</span>' : ''}
+                                    ${(showETF2LTeam && showRGLTeam) ? '/' : ''}
+                                    ${showRGLTeam ? '<span style="background-color:rgb(252, 180, 46);">RGL</span>' : ''}
+                                    ${(showETF2LTeam || showRGLTeam) && (showETF2L || showRGL || showRGLDivision) ? ' Team + ' : ''}
+                                    ${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}
+                                    ${showETF2L && showRGL ? '/' : ''}
+                                    ${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}
+                                    ${(showETF2L || showRGL) ? ' Username' : ''}
+                                    ${(showETF2L || showRGL) && (showRGLDivision || showETF2LDivision) ? ' + ' : ''}
+                                    ${showETF2LDivision ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}
+                                    ${(showRGLDivision && showETF2LDivision) ? '/' : ''}
+                                    ${showRGLDivision ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}
+                                    ${(showRGLDivision || showETF2LDivision) ? ' ' + gamemode + ' Division' : ''}`;
 		//if (await getShowRGLTeamFlag()) rglNameHeader.innerHTML = `<span style="background-color:rgb(252, 180, 46);">RGL Team</span> + `.concat(rglNameHeader.innerHTML);
 	}
 	else
 	{
-		rglNameHeader.innerHTML = `${showRGLTeam ? '<span style="background-color:rgb(252, 180, 46);">RGL Team</span>' : ''}${showRGLTeam && (showETF2L || showRGL) ? ' + ' : ''}${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}${showETF2L && showRGL ? '/' : ''}${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
+		rglNameHeader.innerHTML =  `${showETF2L ? '<span style="background-color:rgb(144, 238, 144);">ETF2L</span>' : ''}
+                                    ${showETF2L && showRGL ? '/' : ''}
+                                    ${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
 	}
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
@@ -691,7 +1039,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID)
             .firstChild;
 
-        const playerInfoStorage = window.sessionStorage.getItem(steamID);
+        const playerInfoStorage = window.localStorage.getItem(steamID);
         let playerInfo;
         if (playerInfoStorage)
 		{
@@ -704,7 +1052,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
             if (playerInfoToInsert === "ratelimited") {
                 const errorElement = document.createElement("span");
                 errorElement.style.backgroundColor = "#450707";
-                errorElement.style.color = white;
+                errorElement.style.color = "white";
                 errorElement.style.fontWeight = "bold";
                 errorElement.style.minWidth = "35px";
                 errorElement.style.display = "inline-block";
@@ -719,27 +1067,33 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
                 continue;
             }
 
-            window.sessionStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
+            window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
             playerInfo = playerInfoToInsert;
         }
 
         // true/false
-        const showETF2L = await getShowETF2LFlag();
-        const showRGL = await getShowRGLFlag();
-        const showRGLTeam = await getShowRGLTeamFlag();
-        const showRGLDivision = await getShowRGLDivisionFlag();
+        //const showETF2L = await getShowETF2LNameFlag();
+        //const showRGL = await getShowRGLNameFlag();
+        //const showRGLTeam = await getShowRGLTeamFlag();
+        //const showRGLDivision = await getShowRGLDivisionFlag();
 
+        showETF2LTeam && (gamemode === "6s" || gamemode === "HL") && updateETF2LTeamOnPage(gamemode, playerInfo, leagueElement);
         showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
         showETF2L && updateETF2LNameOnPage(steamID, playerInfo, leagueElement);
         showRGL && updateRGLName(steamID, playerInfo, leagueElement, gamemode);
-        showRGLDivision && updateRGLDivisionOnPage(playerInfo, leagueElement);
+        showETF2LDivision && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
+        showRGLDivision && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
     };
     // Profiles have local versions that might need updating
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
         const steamID = listOfSteamIDsInStorageThatMightNeedUpdating[i];
         const playerInfoToInsert = await fetchPlayerInfo(steamID);
         if (playerInfoToInsert === "ratelimited") continue;
+        //console.log("playerinfo")
+        //console.log(playerInfoToInsert)
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
+        //console.log(JSON.parse(window.localStorage.getItem(steamID)))
+        //console.log(steamID)
     };
 }
 
@@ -749,7 +1103,7 @@ const steamID64BaseShortened = 1197960265728;
 
 const processLogInfo = async (logID) => {
     const logInfo = await getLogInfo(logID);
-    console.log(logInfo);
+    //console.log(logInfo);
     if (logInfo === "ratelimited") return "ratelimited";
     //console.log(steamID3);
     delete logInfo.version;
@@ -831,7 +1185,7 @@ const updateLogRows = async (steamID) => {
         const curLog = logsListed[i];
         const curLogLink = curLog.getElementsByTagName("a")[0].href;
         const curLogID = curLogLink.substring(curLogLink.lastIndexOf("/") + 1, curLogLink.indexOf("#"));
-        console.log(curLogID);
+        //console.log(curLogID);
 
         
         const logInfoStorage = window.sessionStorage.getItem(curLogID);
@@ -1118,7 +1472,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         console.log("Nothing to do on this page")
     }
 } else {
-    console.log("Not a logs.tf page")
+    console.log("Not a logs.tf page, somehow")
 }
 
 window.onload = async function() {
@@ -1157,22 +1511,22 @@ window.onload = async function() {
             }
 
             //damage % and damage efficiency
-            let table = document.getElementById("players");
-            let headers = table.getElementsByClassName("tablesorter-headerRow")[0];
-            let rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-            let headerDTM = headers.getElementsByTagName("th")[12];
-            let headerDAM = headers.getElementsByTagName("th")[8];
+            const table = document.getElementById("players");
+            const headers = table.getElementsByClassName("tablesorter-headerRow")[0];
+            const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+            const headerDTM = headers.getElementsByTagName("th")[12];
+            const headerDAM = headers.getElementsByTagName("th")[8];
 
-            let DARed = document.getElementById("teams")
+            const DARed = document.getElementById("teams")
                 .getElementsByTagName("tbody")[0].getElementsByTagName("tr")[0].getElementsByTagName("td")[2].innerText;
-            let DABlu = document.getElementById("teams")
+            const DABlu = document.getElementById("teams")
                 .getElementsByTagName("tbody")[0].getElementsByTagName("tr")[1].getElementsByTagName("td")[2].innerText;
             
             const teamOrTotalDamage = await getDamagePercentTotalOrTeamFlag();
 
             const showDamageEfficiency = await getShowDamageEfficiencyFlag();
-            console.log("show damage efficiency")
-            console.log(showDamageEfficiency);
+            //console.log("show damage efficiency")
+            //console.log(showDamageEfficiency);
 
             const showDamagePercent = await getShowDamagePercentFlag();
 
@@ -1196,38 +1550,38 @@ window.onload = async function() {
                 .forEach(processRow, [DARed, DABlu, teamOrTotalDamage, showDamageEfficiency, showDamagePercent]);
 
             //heals received per minute
-            let logtime = document.getElementById("log-length");
+            const logtime = document.getElementById("log-length");
             
-            let heal_panels = document.getElementsByClassName("healspread")[0];
-            let heal_healtables = heal_panels.getElementsByClassName("healtable");
+            const heal_panels = document.getElementsByClassName("healspread")[0];
+            const heal_healtables = heal_panels.getElementsByClassName("healtable");
 
             const showPlayerHPM = await getShowPlayerHPMFlag();
 
             if (showPlayerHPM) {
                 //console.log("yes")
                 //console.log(heal_healtables.length)
-                let heal_headerblu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-                let heal_headerred = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-                let heal_headerbluheals = heal_headerblu.getElementsByTagName("th")[2];
-                let heal_headerredheals = heal_headerred.getElementsByTagName("th")[2];
+                const heal_headerblu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
+                const heal_headerred = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
+                const heal_headerbluheals = heal_headerblu.getElementsByTagName("th")[2];
+                const heal_headerredheals = heal_headerred.getElementsByTagName("th")[2];
 
                 //let heal_medstats = table.getElementsByClassName("medstats")
                 //let heal_medstats
 
-                let HealsBlu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+                const HealsBlu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
                 //console.log(HealsBlu.length)
                 //console.log("yes")
                 //console.log(HealsBlu[1].getElementsByTagName("td")[2].innerText)
-                let HealsRed = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+                const HealsRed = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
                 //console.log(HealsRed.length)
 
-                let HPMHeaderBlu = heal_headerbluheals.cloneNode(true);
+                const HPMHeaderBlu = heal_headerbluheals.cloneNode(true);
                 HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
                 HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
                 HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
                 heal_headerblu.insertBefore(HPMHeaderBlu, heal_headerblu.getElementsByTagName("th")[3]);
 
-                let HPMHeaderRed = heal_headerredheals.cloneNode(true);
+                const HPMHeaderRed = heal_headerredheals.cloneNode(true);
                 HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
                 HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
                 HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
@@ -1318,8 +1672,8 @@ window.onload = async function() {
             
                 //const playerInfo = logInfo.players[steamID3];
                 
-                let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
-                let heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
+                const heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
+                const heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
 
                 const heal_bluheals = heal_medvalblu.innerHTML.substring(heal_medvalblu.innerHTML.indexOf("strong") + 7, heal_medvalblu.innerHTML.lastIndexOf("strong") - 2);
                 //console.log(heal_bluheals);
@@ -1394,29 +1748,75 @@ async function processRow(el, index, array) {
     }
 }
 
-//function processRowBlu(el, index, array) {
-//	console.log("yesyesyesyesyes")
-//
-//    let Heals = el.getElementsByTagName("td")[2];
-//    let Percent = el.getElementsByTagName("td")[4];
-//
-//    let HPMBlu = Heals.cloneNode(true);
-//    //DE.setAttribute("data-original-title", "Damage Efficiency");
-//    HPMBlu.innerText = (parseFloat(Heals.innerText) / parseFloat(Logtime.innerText))
-//        .toFixed(1);
-//	console.log("bluhpm")
-//	console.log(HPMBlu.innerText)
-//    el.insertBefore(HPMBlu, Percent);
-//}
-//
-//function processRowRed(el, index, array) {
-//	let Logtime = document.getElementById("log-length");
-//
-//    let Heals = el.getElementsByTagName("td")[2];
-//    let Percent = el.getElementsByTagName("td")[4];
-//
-//    let HPMRed = Heals.cloneNode(true);
-//    HPMRed.innerText = (parseFloat(Heals.innerText) / parseFloat(Logtime.innerText))
-//        .toFixed(1);
-//    el.insertBefore(HPMRed, Percent);
-//}
+
+/**
+ * dynamicallyAccessCSS 
+ *
+ * @link    https://github.com/Frazer/dynamicallyAccessCSS.js
+ * @license MIT
+ *          
+ * @author  Frazer Kirkman
+ * @published 2016
+ */
+
+var returnStyleSheetRules = (function (){  
+	if(!document.styleSheets[0]){
+			// Create the <style> tag
+			var style = document.createElement("style");
+			// WebKit hack :(
+			style.appendChild(document.createTextNode(""));
+			// Add the <style> element to the page
+			document.head.appendChild(style);
+
+	}
+	if(document.styleSheets[0].cssRules){
+		return function (item) {return  item.cssRules;}
+	} 
+	else if (document.styleSheets[0].rules) {
+	    return function (item) {return  item.rules;}
+	}
+})();
+
+function getCSSRule(search, returnArray) {
+	let styleSheets = [].map.call(document.styleSheets[0], function(item) {
+	  return [].slice.call(returnStyleSheetRules(item));
+	});
+    console.log(document.styleSheets[0]);
+
+	let rule = null;
+	let rules = [];
+	styleSheets.forEach(function(thisSheet){
+	  let findTheRule = thisSheet.filter(function(rule) {
+	    if(rule.selectorText){
+            console.log(rule.selectorText);
+	    	return rule.selectorText.lastIndexOf(search)===0  && search.length===rule.selectorText.length;	
+	    }else return false;
+	  });
+
+	  if(findTheRule.length){
+			rules = rules.concat(findTheRule);
+			rule = findTheRule[findTheRule.length-1];    //findTheRule will contain all rules that reference the selector. findTheRule[findTheRule.length-1] contains the last rule.
+	  }
+	});
+	if (rule){
+		if(returnArray){
+			return rules;
+		}else{
+			return rule;
+		}
+	}else{
+		let sheet = document.styleSheets[0];   //if the rule we are looking for doesn't exist, we create it
+        var pos = sheet.cssRules.length;
+        if("insertRule" in sheet) {
+                sheet.insertRule(search + "{  }",pos);
+        }
+        else if("addRule" in sheet) {
+                sheet.addRule(search, "",pos);
+        }
+		if(returnArray){
+			return returnStyleSheetRules(document.styleSheets[0]);
+		}else{
+			return returnStyleSheetRules(document.styleSheets[0])[pos];
+		}
+	}
+}
