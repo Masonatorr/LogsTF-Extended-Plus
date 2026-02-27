@@ -1057,32 +1057,35 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
     //rglNameHeader.style.paddingLeft = "0px";
 
-    //let allPlayersCached = true;
-    //for (let i = 0; i < listOfSteamIDs.length; i++) {
-    //    if (!window.localStorage.getItem(listOfSteamIDs[i])) {
-    //        allPlayersCached = false;
-    //        console.log("all players cached?")
-    //        console.log(allPlayersCached)
-    //        break;
-    //    }
-    //}
+    let allPlayersCached = true;
+    for (let i = 0; i < listOfSteamIDs.length; i++) {
+        if (!window.localStorage.getItem(listOfSteamIDs[i])) {
+            allPlayersCached = false;
+            console.log("all players cached?")
+            console.log(allPlayersCached)
+            break;
+        }
+    }
 
-    const RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
-
+    let RGLProfileList;
     let bulkProfileOffset = 0;
     let bulkProfileIndexes = [];
-    for (let i = 0; i < listOfSteamIDs.length; i++) {
-        const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
-        //console.log(i - bulkProfileOffset)
-        //console.log(nextRGLProfile)
-        const steamID = listOfSteamIDs[i];
-        //console.log(steamID)
-        if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
-            bulkProfileOffset++;
-            bulkProfileIndexes[i] = null;
-            console.log(`no RGL profile for player ${steamID}`)
-        } else {
-            bulkProfileIndexes[i] = i - bulkProfileOffset;
+
+    if (!allPlayersCached) {
+        RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
+        for (let i = 0; i < listOfSteamIDs.length; i++) {
+            const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
+            //console.log(i - bulkProfileOffset)
+            //console.log(nextRGLProfile)
+            const steamID = listOfSteamIDs[i];
+            //console.log(steamID)
+            if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
+                bulkProfileOffset++;
+                bulkProfileIndexes[i] = null;
+                console.log(`no RGL profile for player ${steamID}`)
+            } else {
+                bulkProfileIndexes[i] = i - bulkProfileOffset;
+            }
         }
     }
     //console.log(bulkProfileIndexes)
@@ -1138,6 +1141,25 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
         showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
     };
+
+    if (allPlayersCached) {
+        RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
+        for (let i = 0; i < listOfSteamIDs.length; i++) {
+            const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
+            //console.log(i - bulkProfileOffset)
+            //console.log(nextRGLProfile)
+            const steamID = listOfSteamIDs[i];
+            //console.log(steamID)
+            if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
+                bulkProfileOffset++;
+                bulkProfileIndexes[i] = null;
+                console.log(`no RGL profile for player ${steamID}`)
+            } else {
+                bulkProfileIndexes[i] = i - bulkProfileOffset;
+            }
+        }
+    }
+
     // Profiles have local versions that might need updating
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
         const steamID = listOfSteamIDsInStorageThatMightNeedUpdating[i];
