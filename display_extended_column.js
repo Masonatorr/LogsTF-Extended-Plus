@@ -642,33 +642,33 @@ const getHighestRGLGamemodeTeam = async (pastTeams) => {
 	];
 }
 
-const updateETF2LOnPage = async () => {
-    for (let i = 0; i < playerRows.length; i++) {
-        const steamID = playerRows[i].id.split("_")[1];
-        const resETF2L = await getETF2LProfile(steamID);
-        if (!resETF2L) return;
-
-        const leagueElement = playerRows[i].firstChild;
-
-        // Get rid of 'Loading...' message
-        //leagueElement.innerHTML = "";
-
-        if (resETF2L.status != 200) {
-            console.log(resETF2L);
-            continue;
-        }
-
-        // const data = await resETF2L.json();
-        const data = await resETF2L;
-        const etf2lLink = document.createElement("a");
-        etf2lLink.innerHTML = data.player.name;
-        etf2lLink.href = `https://etf2l.org/search/${steamID}/`;
-        etf2lLink.target = "_blank";
-        etf2lLink.style.backgroundColor = "rgb(144, 238, 144)";
-        etf2lLink.style.padding = "6px";
-        leagueElement.appendChild(etf2lLink);
-    }
-}
+//const updateETF2LOnPage = async () => {
+//    for (let i = 0; i < playerRows.length; i++) {
+//        const steamID = playerRows[i].id.split("_")[1];
+//        const resETF2L = await getETF2LProfile(steamID);
+//        if (!resETF2L) return;
+//
+//        const leagueElement = playerRows[i].firstChild;
+//
+//        // Get rid of 'Loading...' message
+//        //leagueElement.innerHTML = "";
+//
+//        if (resETF2L.status != 200) {
+//            console.log(resETF2L);
+//            continue;
+//        }
+//
+//        // const data = await resETF2L.json();
+//        const data = await resETF2L;
+//        const etf2lLink = document.createElement("a");
+//        etf2lLink.innerHTML = data.player.name;
+//        etf2lLink.href = `https://etf2l.org/search/${steamID}/`;
+//        etf2lLink.target = "_blank";
+//        etf2lLink.style.backgroundColor = "rgb(144, 238, 144)";
+//        etf2lLink.style.padding = "6px";
+//        leagueElement.appendChild(etf2lLink);
+//    }
+//}
 
 const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     // Get rid of 'Loading...' message
@@ -682,6 +682,7 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     etf2lLink.target = "_blank";
     etf2lLink.style.backgroundColor = "rgb(144, 238, 144)";
     etf2lLink.style.padding = "6px";
+    etf2lLink.style.margin = "6px 0px 6px 6px";
 	if (getShowRGLTeamFlag()) etf2lLink.style.marginLeft = "6px";
     leagueElement.appendChild(etf2lLink);
 
@@ -703,7 +704,7 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
 	etf2lLink.style.color = "rgb(255, 255, 255)"
 
     etf2lLink.classList.add("tip")
-    etf2lLink.setAttribute("data-original-title", `Banned until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason.replace(/\s/g, ' ')}`)
+    etf2lLink.setAttribute("data-original-title", `Banned until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason/*.replace(/\s/g, ' ')*/}`)
 }
 
 const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
@@ -722,7 +723,7 @@ const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	etf2lTeamLink.target = "_blank";
 	etf2lTeamLink.style.backgroundColor = "rgb(38, 217, 38)";
 	etf2lTeamLink.style.padding = "6px";
-	etf2lTeamLink.style.marginLeft = "6px";
+	etf2lTeamLink.style.margin = "6px 0px 6px 0px";
 
 	leagueElement.appendChild(etf2lTeamLink);
 	
@@ -763,8 +764,8 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
     etf2lDivisionElement.style.padding = "2px";
     etf2lDivisionElement.style.marginLeft = "6px";
     if (!playerInfo.rgl.name) etf2lDivisionElement.style.marginRight = "-3px";
-    etf2lDivisionElement.style.marginTop = "5px"
-    etf2lDivisionElement.style.marginBottom = "5px"
+    //etf2lDivisionElement.style.marginTop = "5px"
+    //etf2lDivisionElement.style.marginBottom = "5px"
     etf2lDivisionElement.style.border = "4px";
     etf2lDivisionElement.style.borderStyle = "solid";
     etf2lDivisionElement.style.borderColor = "rgb(144, 238, 144)";
@@ -794,7 +795,7 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
     rglLink.target = "_blank";
     rglLink.style.backgroundColor = "rgb(255, 203, 108)";
     rglLink.style.padding = "6px";
-    rglLink.style.marginLeft = "6px";
+    rglLink.style.margin = "6px 0px 6px 6px";
 
     const banWarning = playerInfo.rgl.banInfo;
     //console.log(playerInfo)
@@ -818,7 +819,7 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
 
     rglLink.classList.add("tip")
     //console.log(Date.parse(banWarning.endsAt))
-    rglLink.setAttribute("data-original-title", `Banned until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason.replace(/\s/g, ' ')}`)
+    rglLink.setAttribute("data-original-title", `Banned until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason/*.replace(/\s/g, ' ')*/}`)
 }
 
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
@@ -836,7 +837,7 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	rglTeamLink.target = "_blank";
 	rglTeamLink.style.backgroundColor = "rgb(252, 180, 46)";
 	rglTeamLink.style.padding = "6px";
-	rglTeamLink.style.marginLeft = "6px";
+	rglTeamLink.style.margin = "6px 0px 6px 6px";
 
 	leagueElement.appendChild(rglTeamLink);
 	
@@ -881,13 +882,17 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
         rglDivisionElement.style.borderColor = "rgb(252, 179, 44)";
     }
 
+    const oldHeight = leagueElement.offsetHeight;
     leagueElement.appendChild(rglDivisionElement);
+    const newHeight = leagueElement.offsetHeight;
 
-    //console.log(leagueElement.offsetHeight)
-    //console.log(leagueElement.children[leagueElement.children.length - 2])
-    //if (playerInfo.etf2l.name && leagueElement.offsetHeight > 49) {
-    //    leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
-    //}
+    console.log(`${oldHeight}, ${newHeight}`)
+    console.log(leagueElement.children[leagueElement.children.length - 2])
+    if (playerInfo.etf2l.name && newHeight > oldHeight && newHeight > 49) {
+        leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
+        leagueElement.insertBefore(document.createElement("br"), rglDivisionElement);
+        rglDivisionElement.style.marginTop = "4px";
+    }
 }
 
 const fetchPlayerInfo = async (steamID, RGLProfile) => {
@@ -1043,6 +1048,8 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
                                     ${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
 	}
 
+    //rglNameHeader.style.paddingLeft = "0px";
+
     //let allPlayersCached = true;
     //for (let i = 0; i < listOfSteamIDs.length; i++) {
     //    if (!window.localStorage.getItem(listOfSteamIDs[i])) {
@@ -1062,7 +1069,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         console.log(i - bulkProfileOffset)
         console.log(nextRGLProfile)
         const steamID = listOfSteamIDs[i];
-        if (nextRGLProfile.steamId != steamID) {
+        if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
             bulkProfileOffset++;
             bulkProfileIndexes[i] = null;
             console.log(`no RGL profile for player ${steamID}`)
@@ -1485,6 +1492,10 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             const mainElement = document.getElementsByClassName("container main")[0];
             mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
 
+            const logBackground = this.document.getElementById("log-section-players");
+            logBackground.style.paddingLeft = "0px";
+            logBackground.style.paddingRight = "20px";
+
             const tableBody = document.getElementById("players");
 
             const playerTableHead = tableBody.children[0].firstElementChild;
@@ -1500,6 +1511,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
                 const leagueData = document.createElement("td");
                 // rglName.innerHTML = "Loading...";
                 leagueData.innerHTML = "";
+                leagueData.style.padding = "2px 10px 2px";
                 playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
             }
 
@@ -1526,6 +1538,10 @@ window.onload = async function() {
                 const mainElement = document.getElementsByClassName("container main")[0];
                 mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
 
+                const logBackground = this.document.getElementById("log-section-players");
+                logBackground.style.paddingLeft = "0px";
+                logBackground.style.paddingRight = "20px";
+
                 const tableBody = document.getElementById("players");
 
                 const playerTableHead = tableBody.children[0].firstElementChild;
@@ -1541,6 +1557,7 @@ window.onload = async function() {
                     const leagueData = document.createElement("td");
                     // rglName.innerHTML = "Loading...";
                     leagueData.innerHTML = "";
+                    leagueData.style.padding = "2px 10px 2px";
                     playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
                 }
 
