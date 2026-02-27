@@ -4,6 +4,7 @@ const currentBrowser = isFirefox ? browser : chrome;
 const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const getRGLProfile = async (steamID) => await sendMessageAndWait("rgl_profile", steamID);
+const getRGLProfilesBulk = async (steamIDList) => await sendMessageAndWait("rgl_profiles_bulk", steamIDList);
 const getETF2LProfile = async (steamID) => await sendMessageAndWait("etf2l_profile", steamID);
 const getRGLPastTeams = async (steamID) => await sendMessageAndWait("rgl_past_teams", steamID);
 const getETF2LPastTeams = async (steamID) => await sendMessageAndWait("etf2l_past_teams", steamID);
@@ -743,7 +744,7 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
         division = getHighestDivison ? (playedGamemode === "6s" ? playerInfo.etf2l.division6s : playedGamemode === "HL" ? playerInfo.etf2l.divisionHL : null) : (playedGamemode === "6s" ? playerInfo.etf2l.latestDivision6s : playedGamemode === "HL" ? playerInfo.etf2l.latestDivisionHL : 1);
         if (division == undefined) division = "None";
         //console.log(division);
-        if (!ETF2LDivisionSpecs[division]) {
+        if (division && !ETF2LDivisionSpecs[division]) {
             console.log(playerInfo);
             console.log("Error occurred for " + playerInfo.etf2l.name);
             console.log(`The division is not valid. Division: ${division}`);
@@ -881,10 +882,16 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
     }
 
     leagueElement.appendChild(rglDivisionElement);
+
+    //console.log(leagueElement.offsetHeight)
+    //console.log(leagueElement.children[leagueElement.children.length - 2])
+    //if (playerInfo.etf2l.name && leagueElement.offsetHeight > 49) {
+    //    leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
+    //}
 }
 
-const fetchPlayerInfo = async (steamID) => {
-    const RGLProfile = await getRGLProfile(steamID);
+const fetchPlayerInfo = async (steamID, RGLProfile) => {
+    //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
     const ETF2LProfile = await getETF2LProfile(steamID);
     const RGLPastTeams = await getRGLPastTeams(steamID);
     //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
@@ -1036,6 +1043,34 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
                                     ${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
 	}
 
+    //let allPlayersCached = true;
+    //for (let i = 0; i < listOfSteamIDs.length; i++) {
+    //    if (!window.localStorage.getItem(listOfSteamIDs[i])) {
+    //        allPlayersCached = false;
+    //        console.log("all players cached?")
+    //        console.log(allPlayersCached)
+    //        break;
+    //    }
+    //}
+
+    const RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
+
+    let bulkProfileOffset = 0;
+    let bulkProfileIndexes = [];
+    for (let i = 0; i < listOfSteamIDs.length; i++) {
+        const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
+        console.log(i - bulkProfileOffset)
+        console.log(nextRGLProfile)
+        const steamID = listOfSteamIDs[i];
+        if (nextRGLProfile.steamId != steamID) {
+            bulkProfileOffset++;
+            bulkProfileIndexes[i] = null;
+            console.log(`no RGL profile for player ${steamID}`)
+        } else {
+            bulkProfileIndexes[i] = i - bulkProfileOffset;
+        }
+    }
+
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
         const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID)
@@ -1050,7 +1085,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         }
 		else
 		{
-            const playerInfoToInsert = await fetchPlayerInfo(steamID);
+            const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] ? RGLProfileList[bulkProfileIndexes[i]] : null);
             if (playerInfoToInsert === "ratelimited") {
                 const errorElement = document.createElement("span");
                 errorElement.style.backgroundColor = "#450707";
@@ -1083,13 +1118,13 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
         showETF2L && updateETF2LNameOnPage(steamID, playerInfo, leagueElement);
         showRGL && updateRGLName(steamID, playerInfo, leagueElement, gamemode);
-        showETF2LDivision && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
-        showRGLDivision && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
+        showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
+        showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
     };
     // Profiles have local versions that might need updating
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
         const steamID = listOfSteamIDsInStorageThatMightNeedUpdating[i];
-        const playerInfoToInsert = await fetchPlayerInfo(steamID);
+        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] ? RGLProfileList[bulkProfileIndexes[i]] : null);
         if (playerInfoToInsert === "ratelimited") continue;
         //console.log("playerinfo")
         //console.log(playerInfoToInsert)
