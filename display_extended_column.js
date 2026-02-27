@@ -452,7 +452,8 @@ const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     for (let i = 0; i < pastTeams.length; i++) {
         if (pastTeams[i].formatName != gameMode) continue;
 
-        const numericalValue = RGLDivisions[pastTeams[i].divisionName];
+        const divisionName = pastTeams[i].divisionName.replace(/RGL-/g, '')
+        const numericalValue = RGLDivisions[divisionName];
         if (greatestNumericalDivisionPlayed < numericalValue) {
             greatestNumericalDivisionPlayed = numericalValue;
         }
@@ -465,8 +466,10 @@ const getLatestDivisionPlayed = (pastTeams, gameMode) => {
 
     for (let i = 0; i < pastTeams.length; i++) {
         if (pastTeams[i].formatName != gameMode) continue;
-        if (RGLDivisions[pastTeams[i].divisionName] === undefined) continue; // To account for special division names like "Spec 2-day" from cups
-        return RGLDivisions[pastTeams[i].divisionName];
+        
+        const divisionName = pastTeams[i].divisionName.replace(/RGL-/g, '')
+        if (RGLDivisions[divisionName] === undefined) continue; // To account for special division names like "Spec 2-day" from cups
+        return RGLDivisions[divisionName];
     }
     return RGLDivisions.None;
 }
@@ -851,6 +854,7 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
     if (!playerInfo.rgl.name) {
         if (!(["6s", "HL"].includes(playedGamemode))) return;
         if (playerInfo.etf2l.name) return;
+        console.log(`no usernames found for playerinfo: ${JSON.stringify(playerInfo)}`)
         division = "NA";
     } else {
         const getHighestDivison = await getHighestDivisionPlayedFlag();
@@ -886,8 +890,8 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
     leagueElement.appendChild(rglDivisionElement);
     const newHeight = leagueElement.offsetHeight;
 
-    console.log(`${oldHeight}, ${newHeight}`)
-    console.log(leagueElement.children[leagueElement.children.length - 2])
+    //console.log(`${oldHeight}, ${newHeight}`)
+    //console.log(leagueElement.children[leagueElement.children.length - 2])
     if (playerInfo.etf2l.name && newHeight > oldHeight && newHeight > 49) {
         leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
         leagueElement.insertBefore(document.createElement("br"), rglDivisionElement);
@@ -951,6 +955,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
     //console.log(RGLProfile)
     //console.log(RGLProfile ? RGLProfile.status.isBanned : 'no rgl')
     //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
+    //console.log(RGLProfile)
     const playerInfoToInsert = {
         rgl: {
             name: RGLProfile ? RGLProfile.name : localPlayerInfoJson ? localPlayerInfoJson.rgl.name : null,
@@ -1066,9 +1071,10 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
     let bulkProfileIndexes = [];
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
-        console.log(i - bulkProfileOffset)
-        console.log(nextRGLProfile)
+        //console.log(i - bulkProfileOffset)
+        //console.log(nextRGLProfile)
         const steamID = listOfSteamIDs[i];
+        //console.log(steamID)
         if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
             bulkProfileOffset++;
             bulkProfileIndexes[i] = null;
@@ -1077,6 +1083,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
             bulkProfileIndexes[i] = i - bulkProfileOffset;
         }
     }
+    //console.log(bulkProfileIndexes)
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
@@ -1092,7 +1099,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         }
 		else
 		{
-            const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] ? RGLProfileList[bulkProfileIndexes[i]] : null);
+            const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] != null ? RGLProfileList[bulkProfileIndexes[i]] : null);
             if (playerInfoToInsert === "ratelimited") {
                 const errorElement = document.createElement("span");
                 errorElement.style.backgroundColor = "#450707";
@@ -1131,7 +1138,8 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
     // Profiles have local versions that might need updating
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
         const steamID = listOfSteamIDsInStorageThatMightNeedUpdating[i];
-        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] ? RGLProfileList[bulkProfileIndexes[i]] : null);
+
+        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] != null ? RGLProfileList[bulkProfileIndexes[i]] : null);
         if (playerInfoToInsert === "ratelimited") continue;
         //console.log("playerinfo")
         //console.log(playerInfoToInsert)
