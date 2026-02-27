@@ -681,7 +681,7 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
 
     const etf2lLink = document.createElement("a");
     etf2lLink.innerHTML = playerInfo.etf2l.name;
-    etf2lLink.href = `https://etf2l.org/search/${steamID}/`;
+    etf2lLink.href = `https://etf2l.org/forum/user/${playerInfo.etf2l.id}/`;
     etf2lLink.target = "_blank";
     etf2lLink.style.backgroundColor = "rgb(144, 238, 144)";
     etf2lLink.style.padding = "6px";
@@ -983,6 +983,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
         },
         etf2l: {
             name: ETF2LProfile ? ETF2LProfile.player.name : localPlayerInfoJson ? localPlayerInfoJson.etf2l.name : null,
+            id: ETF2LProfile ? ETF2LProfile.player.id : localPlayerInfoJson ? localPlayerInfoJson.etf2l.id : null,
             banInfo: ETF2LProfile ?
                 (ETF2LProfile.player.bans != null ? ETF2LProfile.player.bans.pop() : null) :
                 localPlayerInfoJson ?
