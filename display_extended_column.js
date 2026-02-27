@@ -1015,6 +1015,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
 
 const updatePlayerRows = async (playerRows, rglNameHeader) => {
     const listOfSteamIDsInStorageThatMightNeedUpdating = [];
+    const listOfSteamIDsInStorageThatMightNeedUpdatingIndexes = [];
     const arrayOfPlayerRows = [...playerRows];
     const listOfSteamIDs = arrayOfPlayerRows.map((playerRow) => playerRow.id.split("_")[1]);
 
@@ -1097,6 +1098,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 		{
 			playerInfo = JSON.parse(playerInfoStorage);
 			listOfSteamIDsInStorageThatMightNeedUpdating.push(steamID);
+			listOfSteamIDsInStorageThatMightNeedUpdatingIndexes.push(i);
         }
 		else
 		{
@@ -1140,7 +1142,13 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
     for (let i = 0; i < listOfSteamIDsInStorageThatMightNeedUpdating.length; i++) {
         const steamID = listOfSteamIDsInStorageThatMightNeedUpdating[i];
 
-        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] != null ? RGLProfileList[bulkProfileIndexes[i]] : null);
+        const originalIndex = listOfSteamIDsInStorageThatMightNeedUpdatingIndexes[i];
+        if (bulkProfileIndexes[originalIndex] != null && steamID != RGLProfileList[bulkProfileIndexes[originalIndex]].steamId) {
+            console.log("error! steamid and profile id do not match!!!")
+            console.log(steamID)
+            console.log(RGLProfileList[bulkProfileIndexes[originalIndex]])
+        }
+        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[originalIndex] != null ? RGLProfileList[bulkProfileIndexes[originalIndex]] : null);
         if (playerInfoToInsert === "ratelimited") continue;
         //console.log("playerinfo")
         //console.log(playerInfoToInsert)
