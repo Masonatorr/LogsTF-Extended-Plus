@@ -1197,7 +1197,7 @@ const processLogInfo = async (logID) => {
     delete logInfo.chat;
     delete logInfo.killstreaks;
     delete logInfo.success
-    delete logInfo.info;
+    //delete logInfo.info;
     //console.log(logInfo);
     return logInfo;
 }
@@ -1273,7 +1273,8 @@ const updateLogRows = async (steamID) => {
         
         const logInfoStorage = window.sessionStorage.getItem(curLogID);
         let logInfo;
-        if (logInfoStorage) {
+        const logTimestamp = new Date(logInfoStorage ? JSON.parse(logInfoStorage).info.date * 1000 : 0)
+        if (logInfoStorage && logTimestamp.setHours(logTimestamp.getHours() + 2) < Date.now()) {
             console.log("using saved info")
 			logInfo = JSON.parse(logInfoStorage);
         } else {
@@ -1715,17 +1716,18 @@ window.onload = async function() {
                 //console.log(curLogID);
                 const logInfoStorage = window.sessionStorage.getItem(curLogID);
                 let logInfo;
-                if (logInfoStorage) {
+                const logTimestamp = new Date(parseInt(document.getElementsByClassName("datefield")[0].getAttribute("data-timestamp")) * 1000);
+                if (logInfoStorage && logTimestamp.setHours(logTimestamp.getHours() + 2)< Date.now()) {
                     console.log("using saved info")
                     logInfo = JSON.parse(logInfoStorage);
                 } else {
                     console.log("logging new info")
                     logInfo = await processLogInfo(curLogID);
-                if (logInfo === "ratelimited") {
-                    let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
-                    heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Rate limited, wait a few seconds and refresh the page"><strong>ERROR</strong></span>`
-                    return;
-                }
+                    if (logInfo === "ratelimited") {
+                        let heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
+                        heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Rate limited, wait a few seconds and refresh the page"><strong>ERROR</strong></span>`
+                        return;
+                    }
 
                     window.sessionStorage.setItem(curLogID, JSON.stringify(logInfo));
                 }
