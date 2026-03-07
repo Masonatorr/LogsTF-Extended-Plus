@@ -15,7 +15,8 @@
     },
     "host_permissions": [
         "https://api-v2.etf2l.org/*",
-        "https://rgl.gg/*"
+        "https://rgl.gg/*",
+        "https://trends.tf/*"
     ],
     "background": {
         "scripts": [

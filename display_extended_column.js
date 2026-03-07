@@ -8,12 +8,17 @@ const getRGLProfilesBulk = async (steamIDList) => await sendMessageAndWait("rgl_
 const getETF2LProfile = async (steamID) => await sendMessageAndWait("etf2l_profile", steamID);
 const getRGLPastTeams = async (steamID) => await sendMessageAndWait("rgl_past_teams", steamID);
 const getETF2LPastTeams = async (steamID) => await sendMessageAndWait("etf2l_past_teams", steamID);
+const getETF2LMatchesInTimeframe = async (searchParameters) => await sendMessageAndWait("etf2l_matches_in_timeframe", searchParameters);
+const getLogMatchInfo = async (searchParameters) => await sendMessageAndWait("log_match_info", searchParameters);
+const getETF2LMatchByID = async (matchID) => (await sendMessageAndWait("etf2l_match_by_id", matchID)).match;
+const getETF2LCompetitionByID = async (competitionID) => (await sendMessageAndWait("etf2l_competition_by_id", competitionID)).competition;
+const getRGLMatchByID = async (matchID) => await sendMessageAndWait("rgl_match_by_id", matchID);
 const getLogInfo = async (logID) => await sendMessageAndWait("log_info", logID);
 
-const sendMessageAndWait = async (type, steamID) =>
+const sendMessageAndWait = async (type, inputData) =>
     await currentBrowser.runtime.sendMessage({
         type,
-        steamID
+        inputData
     })
 
 const getShowETF2LNameFlag = async () => (await currentBrowser.storage.local.get("showETF2LName"))
@@ -1455,6 +1460,161 @@ const updateLogRows = async (steamID) => {
     }
 }
 
+const getMatchData = async (playersInLog, logTime, gamemode, logID) => {
+    const startTime = logTime.setHours(logTime.getHours()-1)/1000
+    const endTime = logTime.setHours(logTime.getHours()+1)/1000
+    const possibleMatches = (await getLogMatchInfo({players: playersInLog, startTime: startTime, endTime: endTime, gamemode: gamemode === "6s" ? "sixes" : "highlander"})).logs;
+    //console.log(possibleMatches)
+    correctMatch = findDictInArray(possibleMatches, "logid", logID);
+    //console.log(possibleMatches[0]['logid'])
+    //console.log(logID)
+    //console.log(correctMatch)
+    return correctMatch;
+}
+
+const showMatchInfo = async (playerRows) => {
+    const arrayOfPlayerRows = [...playerRows];
+    const listOfSteamIDs = arrayOfPlayerRows.map((playerRow) => playerRow.id.split("_")[1]);
+
+    const dateTime = document.getElementsByClassName("datefield")[0];
+    const timestamp = new Date(dateTime.getAttribute("data-timestamp") * 1000);
+    //console.log(dateTime.getAttribute("data-timestamp") * 1000)
+
+    const gamemode = await getPlayedGamemodeFlag();
+
+    const logID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
+
+    let competitionHeaderText = '';
+    let matchHeaderText = '';
+    let competitionLink = '';
+    let matchLink = '';
+
+    const logDateHeader = document.getElementById("log-date");
+
+    const competitionHeader = document.createElement("h3");
+    const competitionHeaderHyperlink = document.createElement("a");
+
+    competitionHeader.appendChild(competitionHeaderHyperlink);
+    logDateHeader.after(competitionHeader);
+
+    const matchHeader = document.createElement("h3");
+    const matchHeaderHyperlink = document.createElement("a");
+
+    matchHeader.appendChild(matchHeaderHyperlink);
+    competitionHeader.after(matchHeader);
+
+    const logInfoStorage = window.localStorage.getItem(logID);
+    //console.log(logInfoStorage)
+    let logInfo;
+
+    if (logInfoStorage) {
+        console.log("existing match info")
+
+        if (logInfoStorage != "none") {
+            logInfo = JSON.parse(logInfoStorage);
+            competitionHeaderText = logInfo.competitionHeaderText;
+            matchHeaderText = logInfo.matchHeaderText;
+            competitionLink = logInfo.competitionLink;
+            matchLink = logInfo.matchLink;
+        } else {
+            console.log("no comp match associated")
+            matchHeader.innerText = "No Match Found";
+        }
+    } else {
+        console.log("new match info")
+
+        const matchInfo = await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
+        //console.log(matchInfo);
+
+        if (matchInfo.league) {
+            console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
+
+            const league = matchInfo.league;
+            const matchID = matchInfo.matchid;
+            switch(league) {
+                case "etf2l":
+                    //matchHeader.innerText = "Loading..."
+
+                    matchLink = `https://etf2l.org/matches/${matchID}/`;
+
+                    const etf2lMatchInfo = await getETF2LMatchByID(matchID);
+                    //console.log(etf2lMatchInfo)
+
+                    matchHeaderText = `${etf2lMatchInfo.division.name} - ${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
+
+                    const competitionID = etf2lMatchInfo.competition.id;
+                    //console.log(competitionID)
+                    const competitionInfo = await getETF2LCompetitionByID(competitionID);
+
+                    competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
+
+                    if (competitionInfo.archived) {
+                        competitionLink = `https://etf2l.org/etf2l/archives/${competitionID}/1/`;
+                    } else {
+                        competitionLink = `https://etf2l.org/${competitionHeader.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
+                    }
+                    //console.log(competitionLink);
+                    break;
+                case "rgl":
+                    //matchHeader.innerText = "Loading..."
+
+                    matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
+                    //console.log(matchLink)
+
+                    const RGLMatchInfo = await getRGLMatchByID(matchID)
+
+                    competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
+                    competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
+                    //console.log(competitionLink)
+
+                    matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
+                    break;
+                default:
+                    console.log(`unknown league ${league}! report this to me (masonator) so I can add support`)
+                    return;
+            }
+
+            const matchInfoToSave = {
+                competitionHeaderText: competitionHeaderText,
+                matchHeaderText: matchHeaderText,
+                competitionLink: competitionLink,
+                matchLink: matchLink
+            }
+
+            window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
+            //matchHeader.innerText = "";
+        } else {
+            console.log(`no match found for log ${logID}`);
+            let timestampPlus30Minutes = new Date(timestamp.getTime());
+            timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
+            //console.log(timestamp.getTime())
+            //console.log(timestampPlus30Minutes);
+            if (timestampPlus30Minutes < Date.now()) {
+                window.localStorage.setItem(logID, "none");
+                console.log("marking log as not being associated with any competitive matches");
+                matchHeader.innerText = "No Match Found";
+            } else {
+                //console.log(Date.now())
+                //console.log(timestamp.getTime())
+                //console.log(Date.now() - timestamp.getTime())
+                //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
+                //console.log(timestamp.getTime())
+                console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
+                matchHeader.innerText = "No Match Found, Check Again Later";
+            }
+        }
+    }
+
+    //const rightHeader = document.getElementsByClassName("log-header-right")[0];
+    //const uploadedByHeader = document.getElementById("log-uploader");
+
+    competitionHeaderHyperlink.href = competitionLink;
+    competitionHeaderHyperlink.innerText = competitionHeaderText;
+    
+    matchHeaderHyperlink.href = matchLink;
+    matchHeaderHyperlink.innerText = matchHeaderText;
+}
+
 const showIconPopover = (logInfo, classIcon, title) => {
     classPopover = document.createElement("div");
     classPopover.classList.add("popover", "top", "in");
@@ -1556,6 +1716,8 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             }
 
             updatePlayerRows(playerRows, rglNameHeader);
+
+            showMatchInfo(playerRows);
         }
     } else {
         console.log("Nothing to do on this page")
@@ -1602,6 +1764,8 @@ window.onload = async function() {
                 }
 
                 updatePlayerRows(playerRows, rglNameHeader);
+
+                showMatchInfo(playerRows);
             }
 
             //damage % and damage efficiency
@@ -1914,4 +2078,14 @@ function getCSSRule(search, returnArray) {
 			return returnStyleSheetRules(document.styleSheets[0])[pos];
 		}
 	}
+}
+
+function findDictInArray(array, key, value) {
+    for (i = 0; i < array.length; i++) {
+        if (array[i][key] == value) {
+            return array[i];
+        }
+    }
+    console.log(`no match for ${key} in array!`);
+    return null;
 }

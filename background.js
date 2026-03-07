@@ -8,6 +8,9 @@ const checkForErrors = (response) => {
         console.log(response);
         return "ratelimit";
     }
+    if (response.status === 404) {
+        return true;
+    }
     if (!response.ok) {
         console.log("error with response")
         console.log(response.status)
@@ -63,7 +66,7 @@ const getRGLProfilesBulk = async (steamIDList) => {
     const uri = `https://api.rgl.gg/v0/profile/getmany`;
 
     await timer(500);
-    console.log(JSON.stringify(steamIDList))
+    //console.log(JSON.stringify(steamIDList))
     let response = await fetch(uri, {method: "POST",
                                     body: JSON.stringify(steamIDList),
                                     headers: {'accept': '*/*', 'Content-Type': 'application/json'}
@@ -126,6 +129,87 @@ const getETF2LPastTeams = async (steamID) => {
     return await response.json();
 };
 
+//const getETF2LMatchesInTimeframe = async (searchParameters) => {
+//    console.log("get match")
+//    const uriETF2L = new URL(`https://api-v2.etf2l.org/matches`);
+//    const playersJSON = JSON.stringify(searchParameters.players.slice(0, 2 - searchParameters.players.length))/*.replace(/","/, ",  ")*/.replace(/"/g, "");
+//    console.log(playersJSON)
+//    console.log(playersJSON.substring(1, playersJSON.length - 2))
+//
+//    const params = {
+//        "team_type": `${searchParameters.gamemode}`,
+//        "from": searchParameters.startTime,
+//        "to": searchParameters.endTime,
+//        "string[0]" : playersJSON.substring(1, playersJSON.length - 2),
+//    };
+//    Object.keys(params)
+//        .forEach(key => uriETF2L.searchParams.append(key, params[key]));
+//
+//    await timer(500);
+//    let response = await fetch(uriETF2L, {method: "POST",
+//                                    headers: {"Accept": "application/json", 'Content-Type': 'application/json'}
+//                                    });
+//    if (checkForErrors(response) === "ratelimit") {
+//        for (i = 0; i < 10; i++) {
+//            console.log(`retrying after ${3000 * (i + 1)}ms`);
+//            await timer(3000 * (i + 1));
+//            response = await fetch(uriETF2L, {method: "POST",
+//                                    headers: {"Accept": "application/json", 'Content-Type': 'application/json'}
+//                                    });
+//            if (!checkForErrors(response)) return await response.json();
+//        }
+//        return "ratelimited";
+//    } else if (checkForErrors(response)) {
+//        return;
+//    }
+//
+//    return await response.json();
+//};
+
+const getLogMatchInfo = async (logInfo) => {
+    //console.log("get match");
+    const uriTrends = new URL("https://trends.tf/api/v1/logs");
+    //const uriLog = `https://trends.tf/api/v1/logs?steamid64=${logInfo.players[0]}&steamid64=${logInfo.players[logInfo.players.length - 1]}&time_from=${logInfo.startTime}&time_to=${logInfo.endTime}`;
+
+    const params = {
+        "steamid64": logInfo.players[0],
+        "steamid64": logInfo.players[logInfo.players.length - 1],
+        "time_from": logInfo.startTime,
+        "time_to": logInfo.endTime
+    }
+    Object.keys(params)
+        .forEach(key => uriTrends.searchParams.append(key, params[key]));
+
+    //const headers = new Headers();
+    //headers.append("Accept", "*/*");
+    //headers.append("Sec-CH-UA", "Google Chrome";v="90")
+
+    await timer(75);
+    let response = await fetch(uriTrends, {
+                                            method: 'GET',
+                                            headers: {"Accept": "*/*", "Sec-CH-UA": '"Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"'},
+                                          });
+    //console.log(checkForErrors(response))
+    //console.log(checkForErrors(response) === "ratelimit")
+    const error = checkForErrors(response);
+    if (error === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriTrends, {
+                                            method: 'GET',
+                                            headers: {"Accept": "*/*"},
+                                          });
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (error) {
+        return;
+    }
+
+    return response.json();
+};
+
 const getLogInfo = async (logID) => {
     const uriLog = `https://logs.tf/json/${logID}`;
 
@@ -136,6 +220,66 @@ const getLogInfo = async (logID) => {
             console.log(`retrying after ${200 * (i + 1)}ms`);
             await timer(200 * (i + 1));
             response = await fetch(uriLog);
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (checkForErrors(response)) {
+        return;
+    }
+
+    return response.json();
+};
+
+const getETF2LMatchByID = async (matchID) => {
+    const uriMatch = `https://api-v2.etf2l.org/matches/${matchID}`;
+
+    await timer(500);
+    let response = await fetch(uriMatch);
+    if (checkForErrors(response) === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriMatch);
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (checkForErrors(response)) {
+        return;
+    }
+
+    return response.json();
+};
+
+const getETF2LCompetitionByID = async (competitionID) => {
+    const uriCompetition = `https://api-v2.etf2l.org/competition/${competitionID}`;
+
+    await timer(500);
+    let response = await fetch(uriCompetition);
+    if (checkForErrors(response) === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriCompetition);
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (checkForErrors(response)) {
+        return;
+    }
+
+    return response.json();
+};
+
+const getRGLMatchByID = async (matchID) => {
+    const uriMatch = `https://api.rgl.gg/v0/matches/${matchID}`;
+
+    await timer(500);
+    let response = await fetch(uriMatch);
+    if (checkForErrors(response) === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriMatch);
             if (!checkForErrors(response)) return await response.json();
         }
         return "ratelimited";
@@ -176,6 +320,36 @@ const getAllData = async (inputData, messageType) => {
 	{
     	data = await getETF2LPastTeams(inputData);
 		console.log("ETF2L Past Teams")
+		console.log(data)
+    }
+	else if (messageType === "etf2l_matches_in_timeframe")
+	{
+    	data = await getETF2LMatchesInTimeframe(inputData);
+		console.log("ETF2L Matches in Timeframe")
+		console.log(data)
+    }
+	else if (messageType === "log_match_info")
+	{
+    	data = await getLogMatchInfo(inputData);
+		console.log("Match Info For Log")
+		console.log(data)
+    }
+	else if (messageType === "etf2l_match_by_id")
+	{
+    	data = await getETF2LMatchByID(inputData);
+		console.log("ETF2L Match Info")
+		console.log(data)
+    }
+	else if (messageType === "etf2l_competition_by_id")
+	{
+    	data = await getETF2LCompetitionByID(inputData);
+		console.log("ETF2L Competition Info")
+		console.log(data)
+    }
+	else if (messageType === "rgl_match_by_id")
+	{
+    	data = await getRGLMatchByID(inputData);
+		console.log("RGL Match Info")
 		console.log(data)
     }
 	else if (messageType === "log_info")
@@ -260,7 +434,7 @@ currentBrowser.runtime.onInstalled.addListener(async () => {
 });
 
 currentBrowser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    getAllData(message.steamID, message.type)
+    getAllData(message.inputData, message.type)
         .then((data) => sendResponse(data));
     return true;
 });
