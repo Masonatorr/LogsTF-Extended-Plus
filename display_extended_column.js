@@ -1209,6 +1209,9 @@ const processLogInfo = async (logID) => {
     return logInfo;
 }
 
+let markScoreColumnComplete;
+const scoreColumnCompleted = new Promise(res => {markScoreColumnComplete = res});
+
 const updateLogRows = async (steamID) => {
     const logTable = document.getElementsByClassName("loglist")[0];
 
@@ -1234,6 +1237,7 @@ const updateLogRows = async (steamID) => {
         scoreColumn.innerText = "Score";
         scoreColumn.style.minWidth = "50px";
         scoreColumn.classList.add("center", "tip");
+        scoreColumn.id = "scoreheader"
         scoreColumn.setAttribute("data-original-title", "Win - Loss - Stalemate")
         logTableHeader.insertBefore(scoreColumn, logTableHeader.children[0]);
     }
@@ -1270,6 +1274,8 @@ const updateLogRows = async (steamID) => {
             curLog.insertBefore(scorePreview, curLog.children[0]);
         }
     }
+    console.log("left column created")
+    markScoreColumnComplete();
 
     for (let i = 0; i < numLogs; i++) {
         const curLog = logsListed[i];
@@ -1735,7 +1741,25 @@ window.onload = async function() {
     if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
         console.log("valid page")
         if (pageURL.includes("profile")) {
-
+            const combinerButtons = document.getElementsByClassName("log_add_button");
+            //console.log(typeof(combinerButtons));
+            //console.log(combinerButtons);
+            if (await getShowMatchScoresFlag() && combinerButtons.length > 0) {
+                await scoreColumnCompleted;
+                console.log("offsetting log combiner buttons!");
+                this.document.getElementsByClassName("loglist")[0].style.marginLeft = "11px"
+                for (let element of combinerButtons) {
+                    let parentElement = element.parentNode;
+                    //console.log(parentElement)
+                    let logElement = parentElement.parentNode;
+                    let previousElement = parentElement.previousElementSibling;
+                    //console.log(previousElement)
+                    previousElement.appendChild(element);
+                    element.style.marginLeft = "-60px"
+                }
+            } else {
+                console.log("no log combiner buttons to offset");
+            }
         } else if (pageURL.length > 17) {
             console.log("onload singlelog")
 
