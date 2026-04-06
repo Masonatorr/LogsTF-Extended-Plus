@@ -714,7 +714,7 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
 	etf2lLink.style.color = "rgb(255, 255, 255)"
 
     etf2lLink.classList.add("tip")
-    etf2lLink.setAttribute("data-original-title", `Banned until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason/*.replace(/\s/g, ' ')*/}`)
+    etf2lLink.setAttribute("data-original-title", `Banned from ETF2L until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason/*.replace(/\s/g, ' ')*/}`)
 }
 
 const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
@@ -829,7 +829,7 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
 
     rglLink.classList.add("tip")
     //console.log(Date.parse(banWarning.endsAt))
-    rglLink.setAttribute("data-original-title", `Banned until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason/*.replace(/\s/g, ' ')*/}`)
+    rglLink.setAttribute("data-original-title", `Banned from RGL until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason/*.replace(/\s/g, ' ')*/}`)
 }
 
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
