@@ -915,64 +915,81 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
     const showRGLTeam = await getShowRGLTeamFlag();
     const showRGLDivision = await getShowRGLDivisionFlag();
 
-    //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
-    const ETF2LProfile = (skipMode == "skipSome" && ![showETF2L, showETF2LTeam, showETF2LDivision].includes(true))
-                         || (skipMode == "fetchSkipped" && [showETF2L, showETF2LTeam, showETF2LDivision].includes(true))
-                         ? null
-                         : await getETF2LProfile(steamID);
-    const RGLPastTeams = (skipMode == "skipSome" && ![showRGLTeam, showRGLDivision].includes(true))
-                         || (skipMode == "fetchSkipped" && [showRGLTeam, showRGLDivision].includes(true))
-                         || (!RGLProfile)
-                         ? null
-                         : await getRGLPastTeams(steamID);
-    //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
-    console.log(skipMode)
-
-    if ([RGLProfile, ETF2LProfile, RGLPastTeams/* + ETF2LPastTeams*/].includes("ratelimited")) return "ratelimited";
-
-    const [
-        RGLHighestDivisionString6s,
-        RGLLatestDivisionString6s,
-        RGLHighestDivisionStringHL,
-        RGLLatestDivisionStringHL
-	] = (skipMode == "skipSome" && !(showRGLDivision)) || (skipMode == "fetchSkipped" && showRGLDivision) ? new Array(4).fill(null) : await getHighestRGLGamemodeTeam(RGLPastTeams);
-
     const localPlayerInfo = window.localStorage.getItem(steamID) ?? null;
 
     const localPlayerInfoJson = JSON.parse(localPlayerInfo);
 
-	const [
-		RGLCurrentTeamString6s,
-		RGLCurrentTeamIDString6s,
-		RGLCurrentTeamStringHL,
-		RGLCurrentTeamIDStringHL
-	] = (skipMode == "skipSome" && !(showRGLTeam)) || (skipMode == "fetchSkipped" && showRGLTeam) ? new Array(4).fill(null) : await getCurrentRGLTeam(RGLPastTeams);
+    let ETF2LProfile, RGLPastTeams;
+    let RGLHighestDivisionString6s, RGLLatestDivisionString6s, RGLHighestDivisionStringHL, RGLLatestDivisionStringHL;
+    let RGLCurrentTeamString6s, RGLCurrentTeamIDString6s, RGLCurrentTeamStringHL, RGLCurrentTeamIDStringHL;
+    let ETF2LHighestDivisionString6s, ETF2LLatestDivisionString6s, ETF2LCurrentTeamString6s, ETF2LCurrentTeamIDString6s, ETF2LHighestDivisionStringHL, ETF2LLatestDivisionStringHL, ETF2LCurrentTeamStringHL, ETF2LCurrentTeamIDStringHL;
 
-    const [
-        ETF2LHighestDivisionString6s,
-        ETF2LLatestDivisionString6s,
-        ETF2LCurrentTeamString6s,
-        ETF2LCurrentTeamIDString6s,
-        ETF2LHighestDivisionStringHL,
-        ETF2LLatestDivisionStringHL,
-        ETF2LCurrentTeamStringHL,
-        ETF2LCurrentTeamIDStringHL,
-    ] = (skipMode == "skipSome" && !(showETF2LTeam && showETF2LDivision)) || (skipMode == "fetchSkipped" && (showETF2LTeam || showETF2LDivision)) ? new Array(8).fill(null) : await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
+    //Only fetch new info if it was last updated more than a day ago
+    if (!localPlayerInfoJson || !localPlayerInfoJson.lastUpdated || (Date.now() - localPlayerInfoJson.lastUpdated) / 1000 > 86400) {
 
-    //console.log([
-    //    ETF2LHighestDivisionString6s,
-    //    ETF2LLatestDivisionString6s,
-    //    ETF2LCurrentTeamString6s,
-    //    ETF2LCurrentTeamIDString6s,
-    //    ETF2LHighestDivisionStringHL,
-    //    ETF2LLatestDivisionStringHL,
-    //    ETF2LCurrentTeamStringHL,
-    //    ETF2LCurrentTeamIDStringHL,
-    //]);
+        //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
+        ETF2LProfile = (skipMode == "skipSome" && ![showETF2L, showETF2LTeam, showETF2LDivision].includes(true)) ||
+                             (skipMode == "fetchSkipped" && [showETF2L, showETF2LTeam, showETF2LDivision].includes(true)) ?
+                             null :
+                             await getETF2LProfile(steamID);
+        RGLPastTeams = (skipMode == "skipSome" && ![showRGLTeam, showRGLDivision].includes(true)) ||
+                             (skipMode == "fetchSkipped" && [showRGLTeam, showRGLDivision].includes(true)) ||
+                             (!RGLProfile) ?
+                             null :
+                             await getRGLPastTeams(steamID);
+        //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
+        console.log(skipMode)
 
-	//console.log(await getCurrentRGLTeam(pastTeams));
-	
-	//console.log(currentTeamString6s);
+        if ([RGLProfile, ETF2LProfile, RGLPastTeams/* + ETF2LPastTeams*/].includes("ratelimited")) return "ratelimited";
+
+        [
+            RGLHighestDivisionString6s,
+            RGLLatestDivisionString6s,
+            RGLHighestDivisionStringHL,
+            RGLLatestDivisionStringHL
+        ] = (skipMode == "skipSome" && !(showRGLDivision)) || (skipMode == "fetchSkipped" && showRGLDivision) ? new Array(4).fill(null) : await getHighestRGLGamemodeTeam(RGLPastTeams);
+
+        [
+            RGLCurrentTeamString6s,
+            RGLCurrentTeamIDString6s,
+            RGLCurrentTeamStringHL,
+            RGLCurrentTeamIDStringHL
+        ] = (skipMode == "skipSome" && !(showRGLTeam)) || (skipMode == "fetchSkipped" && showRGLTeam) ? new Array(4).fill(null) : await getCurrentRGLTeam(RGLPastTeams);
+
+        [
+            ETF2LHighestDivisionString6s,
+            ETF2LLatestDivisionString6s,
+            ETF2LCurrentTeamString6s,
+            ETF2LCurrentTeamIDString6s,
+            ETF2LHighestDivisionStringHL,
+            ETF2LLatestDivisionStringHL,
+            ETF2LCurrentTeamStringHL,
+            ETF2LCurrentTeamIDStringHL,
+        ] = (skipMode == "skipSome" && !(showETF2LTeam && showETF2LDivision)) || (skipMode == "fetchSkipped" && (showETF2LTeam || showETF2LDivision)) ? new Array(8).fill(null) : await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
+
+        //console.log([
+        //    ETF2LHighestDivisionString6s,
+        //    ETF2LLatestDivisionString6s,
+        //    ETF2LCurrentTeamString6s,
+        //    ETF2LCurrentTeamIDString6s,
+        //    ETF2LHighestDivisionStringHL,
+        //    ETF2LLatestDivisionStringHL,
+        //    ETF2LCurrentTeamStringHL,
+        //    ETF2LCurrentTeamIDStringHL,
+        //]);
+
+        //console.log(await getCurrentRGLTeam(pastTeams));
+        
+        //console.log(currentTeamString6s);
+
+        //const curTime = Math.floor(Date.now() / 1000);
+        //console.log(RGLProfile)
+        //console.log(RGLProfile ? RGLProfile.status.isBanned : 'no rgl')
+        //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
+        //console.log(RGLProfile)
+    } else {
+        console.log(`Player info was updated less than 1 day ago (${(((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 3600 : ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 60).toFixed(2)} ${((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? "hours" : "minutes"}), skipping`)
+    }
 
     //const curTime = Math.floor(Date.now() / 1000);
     //console.log(RGLProfile)
@@ -981,7 +998,11 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
     //console.log(RGLProfile)
     const playerInfoToInsert = {
         rgl: {
-            name: RGLProfile ? RGLProfile.name : localPlayerInfoJson ? localPlayerInfoJson.rgl.name : null,
+            name: RGLProfile ?
+                RGLProfile.name : 
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.name :
+                null,
             banInfo: RGLProfile ?
                 (RGLProfile.status.isBanned ? RGLProfile.banInformation : false) :
                 localPlayerInfoJson ?
@@ -997,16 +1018,48 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
                 localPlayerInfoJson ?
                 localPlayerInfoJson.rgl.divisionHL :
                 "None",
-            latestDivision6s: RGLLatestDivisionString6s,
-            latestDivisionHL: RGLLatestDivisionStringHL,
-			currentTeam6s: RGLCurrentTeamString6s,
-			currentTeamHL: RGLCurrentTeamStringHL,
-			currentTeamID6s: RGLCurrentTeamIDString6s,
-			currentTeamIDHL: RGLCurrentTeamIDStringHL,
+            latestDivision6s: RGLLatestDivisionString6s ?
+                RGLLatestDivisionString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.latestDivision6s :
+                "None",
+            latestDivisionHL: RGLLatestDivisionStringHL ?
+                RGLLatestDivisionStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.latestDivisionHL :
+                "None",
+			currentTeam6s: RGLCurrentTeamString6s ?
+                RGLCurrentTeamString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.currentTeam6s :
+                "None",
+			currentTeamHL: RGLCurrentTeamStringHL ?
+                RGLCurrentTeamStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.currentTeamHL :
+                "None",
+			currentTeamID6s: RGLCurrentTeamIDString6s ?
+                RGLCurrentTeamIDString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.currentTeamID6s :
+                "None",
+			currentTeamIDHL: RGLCurrentTeamIDStringHL ?
+                RGLCurrentTeamIDStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.rgl.currentTeamIDHL :
+                "None",
         },
         etf2l: {
-            name: ETF2LProfile ? ETF2LProfile.player.name : localPlayerInfoJson ? localPlayerInfoJson.etf2l.name : null,
-            id: ETF2LProfile ? ETF2LProfile.player.id : localPlayerInfoJson ? localPlayerInfoJson.etf2l.id : null,
+            name: ETF2LProfile ?
+                ETF2LProfile.player.name :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.name :
+                null,
+            id: ETF2LProfile ?
+                ETF2LProfile.player.id :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.id :
+                null,
             banInfo: ETF2LProfile ?
                 (ETF2LProfile.player.bans != null ? ETF2LProfile.player.bans.pop() : null) :
                 localPlayerInfoJson ?
@@ -1022,13 +1075,38 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
                 localPlayerInfoJson ?
                 localPlayerInfoJson.etf2l.divisionHL :
                 "None",
-            latestDivision6s: ETF2LLatestDivisionString6s,
-            latestDivisionHL: ETF2LLatestDivisionStringHL,
-			currentTeam6s: ETF2LCurrentTeamString6s,
-			currentTeamHL: ETF2LCurrentTeamStringHL,
-			currentTeamID6s: ETF2LCurrentTeamIDString6s,
-			currentTeamIDHL: ETF2LCurrentTeamIDStringHL,
+            latestDivision6s: ETF2LLatestDivisionString6s ?
+                ETF2LLatestDivisionString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.latestDivision6s :
+                "None",
+            latestDivisionHL: ETF2LLatestDivisionStringHL ?
+                ETF2LLatestDivisionStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.latestDivisionHL :
+                "None",
+			currentTeam6s: ETF2LCurrentTeamString6s ?
+                ETF2LCurrentTeamString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.currentTeam6s :
+                "None",
+			currentTeamHL: ETF2LCurrentTeamStringHL ?
+                ETF2LCurrentTeamStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.currentTeamHL :
+                "None",
+			currentTeamID6s: ETF2LCurrentTeamIDString6s ?
+                ETF2LCurrentTeamIDString6s :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.currentTeamID6s :
+                "None",
+			currentTeamIDHL: ETF2LCurrentTeamIDStringHL ?
+                ETF2LCurrentTeamIDStringHL :
+                localPlayerInfoJson ?
+                localPlayerInfoJson.etf2l.currentTeamIDHL :
+                "None",
         },
+        lastUpdated: Date.now(),
     };
     //console.log(playerInfoToInsert.rgl.banInfo)
 	//console.log("highestDivisionString6s")
