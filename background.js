@@ -65,7 +65,7 @@ const getRGLProfile = async (steamID) => {
 const getRGLProfilesBulk = async (steamIDList) => {
     const uri = `https://api.rgl.gg/v0/profile/getmany`;
 
-    await timer(500);
+    //await timer(500);
     //console.log(JSON.stringify(steamIDList))
     let response = await fetch(uri, {method: "POST",
                                     body: JSON.stringify(steamIDList),
