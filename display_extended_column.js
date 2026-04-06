@@ -906,20 +906,36 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
     }
 }
 
-const fetchPlayerInfo = async (steamID, RGLProfile) => {
-    //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
-    const ETF2LProfile = await getETF2LProfile(steamID);
-    const RGLPastTeams = await getRGLPastTeams(steamID);
-    //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
+//Takes steamID64 and RGL profile (if retrieved by the RGL profile batch fetch) and returns a dictionary of player info
+const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
+    const showETF2L = await getShowETF2LNameFlag();
+    const showETF2LTeam = await getShowETF2LTeamFlag();
+    const showETF2LDivision = await getShowETF2LDivisionFlag();
+    const showRGL = await getShowRGLNameFlag();
+    const showRGLTeam = await getShowRGLTeamFlag();
+    const showRGLDivision = await getShowRGLDivisionFlag();
 
-    if ((RGLProfile + ETF2LProfile + RGLPastTeams/* + ETF2LPastTeams*/).includes("ratelimited")) return "ratelimited";
+    //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
+    const ETF2LProfile = (skipMode == "skipSome" && ![showETF2L, showETF2LTeam, showETF2LDivision].includes(true))
+                         || (skipMode == "fetchSkipped" && [showETF2L, showETF2LTeam, showETF2LDivision].includes(true))
+                         ? null
+                         : await getETF2LProfile(steamID);
+    const RGLPastTeams = (skipMode == "skipSome" && ![showRGLTeam, showRGLDivision].includes(true))
+                         || (skipMode == "fetchSkipped" && [showRGLTeam, showRGLDivision].includes(true))
+                         || (!RGLProfile)
+                         ? null
+                         : await getRGLPastTeams(steamID);
+    //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
+    console.log(skipMode)
+
+    if ([RGLProfile, ETF2LProfile, RGLPastTeams/* + ETF2LPastTeams*/].includes("ratelimited")) return "ratelimited";
 
     const [
         RGLHighestDivisionString6s,
         RGLLatestDivisionString6s,
         RGLHighestDivisionStringHL,
         RGLLatestDivisionStringHL
-	] = await getHighestRGLGamemodeTeam(RGLPastTeams);
+	] = (skipMode == "skipSome" && !(showRGLDivision)) || (skipMode == "fetchSkipped" && showRGLDivision) ? new Array(4).fill(null) : await getHighestRGLGamemodeTeam(RGLPastTeams);
 
     const localPlayerInfo = window.localStorage.getItem(steamID) ?? null;
 
@@ -930,7 +946,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
 		RGLCurrentTeamIDString6s,
 		RGLCurrentTeamStringHL,
 		RGLCurrentTeamIDStringHL
-	] = await getCurrentRGLTeam(RGLPastTeams);
+	] = (skipMode == "skipSome" && !(showRGLTeam)) || (skipMode == "fetchSkipped" && showRGLTeam) ? new Array(4).fill(null) : await getCurrentRGLTeam(RGLPastTeams);
 
     const [
         ETF2LHighestDivisionString6s,
@@ -941,7 +957,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
         ETF2LLatestDivisionStringHL,
         ETF2LCurrentTeamStringHL,
         ETF2LCurrentTeamIDStringHL,
-    ] = await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
+    ] = (skipMode == "skipSome" && !(showETF2LTeam && showETF2LDivision)) || (skipMode == "fetchSkipped" && (showETF2LTeam || showETF2LDivision)) ? new Array(8).fill(null) : await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
 
     //console.log([
     //    ETF2LHighestDivisionString6s,
@@ -1023,6 +1039,8 @@ const fetchPlayerInfo = async (steamID, RGLProfile) => {
 const updatePlayerRows = async (playerRows, rglNameHeader) => {
     const listOfSteamIDsInStorageThatMightNeedUpdating = [];
     const listOfSteamIDsInStorageThatMightNeedUpdatingIndexes = [];
+    const listOfSteamIDsInStorageThatSkippedFetches = [];
+    const listOfSteamIDsInStorageThatSkippedFetchesIndexes = [];
     const arrayOfPlayerRows = [...playerRows];
     const listOfSteamIDs = arrayOfPlayerRows.map((playerRow) => playerRow.id.split("_")[1]);
 
@@ -1074,11 +1092,14 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         }
     }
 
-    let RGLProfileList;
+    
+    const allRGLInfoDisabled = ![showRGL, showRGLTeam, showRGLDivision].includes(true)
+
+    let RGLProfileList = null;
     let bulkProfileOffset = 0;
     let bulkProfileIndexes = [];
 
-    if (!allPlayersCached) {
+    if (!allPlayersCached && !allRGLInfoDisabled) {
         RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
         for (let i = 0; i < listOfSteamIDs.length; i++) {
             const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
@@ -1096,6 +1117,11 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         }
     }
     //console.log(bulkProfileIndexes)
+    //Check if any league info is disabled
+    const anyLeagueInfoDisabled = [showETF2L, showETF2LTeam, showETF2LDivision, showRGL, showRGLTeam, showRGLDivision].includes(false)
+    console.log([showETF2L, showETF2LTeam, showETF2LDivision, showRGL, showRGLTeam, showRGLDivision])
+    console.log("anyLeagueInfoDisabled")
+    console.log(anyLeagueInfoDisabled)
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
@@ -1112,7 +1138,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         }
 		else
 		{
-            const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] != null ? RGLProfileList[bulkProfileIndexes[i]] : null);
+            const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[i] != null ? RGLProfileList[bulkProfileIndexes[i]] : null, anyLeagueInfoDisabled ? "skipSome" : "default");
             if (playerInfoToInsert === "ratelimited") {
                 const errorElement = document.createElement("span");
                 errorElement.style.backgroundColor = "#450707";
@@ -1133,6 +1159,12 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
             window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
             playerInfo = playerInfoToInsert;
+
+            //If any league info is set to not be shown, it will not be fetched to save load time, so fetch it after everything is loaded
+            if (anyLeagueInfoDisabled) {
+                listOfSteamIDsInStorageThatSkippedFetches.push(steamID);
+                listOfSteamIDsInStorageThatSkippedFetchesIndexes.push(i);
+            }
         }
 
         // true/false
@@ -1149,7 +1181,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
     };
 
-    if (allPlayersCached) {
+    if (allPlayersCached || allRGLInfoDisabled) {
         RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
         for (let i = 0; i < listOfSteamIDs.length; i++) {
             const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
@@ -1178,6 +1210,25 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
             console.log(RGLProfileList[bulkProfileIndexes[originalIndex]])
         }
         const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[originalIndex] != null ? RGLProfileList[bulkProfileIndexes[originalIndex]] : null);
+        if (playerInfoToInsert === "ratelimited") continue;
+        //console.log("playerinfo")
+        //console.log(playerInfoToInsert)
+        window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
+        //console.log(JSON.parse(window.localStorage.getItem(steamID)))
+        //console.log(steamID)
+    };
+
+    //If any fetches were skipped, do them here
+    for (let i = 0; i < listOfSteamIDsInStorageThatSkippedFetches.length; i++) {
+        const steamID = listOfSteamIDsInStorageThatSkippedFetches[i];
+
+        const originalIndex = listOfSteamIDsInStorageThatSkippedFetchesIndexes[i];
+        if (bulkProfileIndexes[originalIndex] != null && steamID != RGLProfileList[bulkProfileIndexes[originalIndex]].steamId) {
+            console.log("error! steamid and profile id do not match!!!")
+            console.log(steamID)
+            console.log(RGLProfileList[bulkProfileIndexes[originalIndex]])
+        }
+        const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[originalIndex] != null ? RGLProfileList[bulkProfileIndexes[originalIndex]] : null , "fetchSkipped");
         if (playerInfoToInsert === "ratelimited") continue;
         //console.log("playerinfo")
         //console.log(playerInfoToInsert)
