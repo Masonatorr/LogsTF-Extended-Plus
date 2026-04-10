@@ -1835,6 +1835,24 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         //console.log(pageURL);
         console.log("Parsing single log stats and info!")
 
+        let classIcons = document.getElementsByClassName("classicon");
+
+        for (let icon of classIcons) {
+            let dataToDisplay = icon.getAttribute("data-content");
+            let timePlayed = dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0].split(":");
+            console.log(timePlayed);
+            let secondsPlayed = (parseInt(timePlayed[0]) * 60) + parseInt(timePlayed[1]);
+            console.log(secondsPlayed);
+            let damageDone = dataToDisplay.match(/(\d+(?=<\/td><\/tr><\/table><hr>))/g)[0];
+            console.log(damageDone);
+            if (damageDone == 0) continue;
+            dataToDisplay = dataToDisplay.replace(/((?<=<th>D<\/th><th>DA)<\/th>)/g, `</th><th>DA\/M</th>`); //add dpm header
+            console.log(dataToDisplay);
+            dataToDisplay = dataToDisplay.replace(/(<\/td>(?=<\/tr><\/table><hr>))/g, `</td><td>${(parseInt(damageDone) / (secondsPlayed / 60)).toFixed(0)}</td>`);
+            console.log(dataToDisplay);
+            icon.setAttribute("data-content", dataToDisplay);
+        }
+
         if (!isFirefox) {
             const mainElement = document.getElementsByClassName("container main")[0];
             mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
