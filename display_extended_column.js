@@ -988,7 +988,7 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
         //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
         //console.log(RGLProfile)
     } else {
-        console.log(`Player info was updated less than 1 day ago (${(((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 3600 : ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 60).toFixed(2)} ${((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? "hours" : "minutes"}), skipping`)
+        console.log(`Player info was updated less than 1 day ago (${(((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 3600 : ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 60).toFixed(2)} ${((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? "hours" : "minutes"} ago), skipping`)
     }
 
     //const curTime = Math.floor(Date.now() / 1000);
