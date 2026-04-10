@@ -2084,71 +2084,45 @@ window.onload = async function() {
                     window.sessionStorage.setItem(curLogID, JSON.stringify(logInfo));
                 }
 
-                let bluSteamID3;
-                let redSteamID3;
-                let bluMedicTimePlayed;
-                let redMedicTimePlayed;
-                let bluMedicDeaths;
-                let redMedicDeaths;
-                const bluUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("blu")[0].innerText;
-                const redUsername = this.document.getElementsByClassName("healspread")[0].getElementsByClassName("red")[0].innerText;
+                const healtables = document.getElementsByClassName("healtable");
 
-                const listOfSteamIDs = Object.keys(logInfo.names);
-                const listOfNames = logInfo.names;
-                for (i = 0; i < listOfSteamIDs.length; i++) {
-                    if (listOfNames[listOfSteamIDs[i]] === bluUsername) {
-                        bluSteamID3 = listOfSteamIDs[i]
-                        const bluMedicClassesPlayed = logInfo.players[bluSteamID3].class_stats;
-                        for (j = 0; j < bluMedicClassesPlayed.length; j++) {
-                            if (bluMedicClassesPlayed[j].type === "medic") {
-                                bluMedicTimePlayed = bluMedicClassesPlayed[j].total_time
-                                bluMedicDeaths = bluMedicClassesPlayed[j].deaths
-                            };
+                for (let healtable of healtables) {
+                    let healerSteamID3;
+                    let healerTimePlayed;
+                    let healerDeaths;
+                    const healerUsername = healtable.getElementsByTagName("h6")[0].innerText;
+                    //console.log(healerUsername)
+                    
+                    const healerHealsDisplay = healtable.getElementsByClassName("medval")[0];
+
+                    const healerHeals = healerHealsDisplay.innerHTML.substring(healerHealsDisplay.innerHTML.indexOf("strong") + 7, healerHealsDisplay.innerHTML.lastIndexOf("strong") - 2);
+
+                    const listOfSteamIDs = Object.keys(logInfo.names);
+                    const listOfNames = logInfo.names;
+                    for (let steamID of listOfSteamIDs) {
+                        //console.log(listOfNames[steamID])
+                        if (listOfNames[steamID] === healerUsername) {
+                            //console.log("found player")
+                            healerSteamID3 = steamID
+                            const healerClassesPlayed = logInfo.players[healerSteamID3].class_stats;
+                            for (let classPlayed of healerClassesPlayed) {
+                                if (classPlayed.type === "medic" || healerClassesPlayed.length == 1) {
+                                    healerTimePlayed = classPlayed.total_time
+                                    healerDeaths = classPlayed.deaths
+                                };
+                            }
+                            break;
                         }
-                    } else if (listOfNames[listOfSteamIDs[i]] === redUsername) {
-                        redSteamID3 = listOfSteamIDs[i]
-                        const redMedicClassesPlayed = logInfo.players[redSteamID3].class_stats;
-                        for (j = 0; j < redMedicClassesPlayed.length; j++) {
-                            if (redMedicClassesPlayed[j].type === "medic") {
-                                redMedicTimePlayed = redMedicClassesPlayed[j].total_time
-                                redMedicDeaths = redMedicClassesPlayed[j].deaths
-                            };
-                        }
-                    };
-                }
-            
-                //const playerInfo = logInfo.players[steamID3];
+                    }
                 
-                const heal_medvalblu = heal_healtables[0].getElementsByClassName("medval")[0];
-                const heal_medvalred = heal_healtables[1].getElementsByClassName("medval")[0];
+                    //const playerInfo = logInfo.players[steamID3];
+                    const healerTimeAlive = healerTimePlayed - (14 * healerDeaths);
+                    if (healerTimeAlive <= 0) continue;
 
-                const heal_bluheals = heal_medvalblu.innerHTML.substring(heal_medvalblu.innerHTML.indexOf("strong") + 7, heal_medvalblu.innerHTML.lastIndexOf("strong") - 2);
-                //console.log(heal_bluheals);
-                const heal_blutimealive = bluMedicTimePlayed - (14 * bluMedicDeaths);
-                const heal_bluhealsperminutealive = heal_bluheals / (heal_blutimealive / 60);
-                //console.log(heal_bluhealsperminutealive);
+                    const healerHealsPerMinuteAlive = healerHeals / (healerTimeAlive / 60);
 
-                //const bluHPMAElement = this.document.createElement("td");
-                //bluHPMAElement.classList.add("tip");
-                //bluHPMAElement.innerHTML = `(${heal_bluhealsperminutealive.toFixed(0)}/m alive)`;
-                ////bluHPMAElement.setAttribute("style", )
-                //bluHPMAElement.style.textAlign = "right !important";
-                //bluHPMAElement.style.width = "auto !important";
-                //bluHPMAElement.style.borderWidth = "0.8";
-                //bluHPMAElement.style.padding = "0px !important";
-                //bluHPMAElement.setAttribute("data-original-title", "Heals Per Minute Alive<br>(Estimates 14s Respawn Time per Death)");
-
-                //heal_medvalblu.appendChild(bluHPMAElement)
-
-                heal_medvalblu.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_bluhealsperminutealive.toFixed(0)}/m alive)</span>`
-
-                const heal_redheals = heal_medvalred.innerHTML.substring(heal_medvalred.innerHTML.indexOf("strong") + 7, heal_medvalred.innerHTML.lastIndexOf("strong") - 2);
-                //console.log(heal_redheals);
-                const heal_redtimealive = redMedicTimePlayed - (14 * redMedicDeaths);
-                const heal_redhealsperminutealive = heal_redheals / (heal_redtimealive / 60);
-                //console.log(heal_redhealsperminutealive);
-
-                heal_medvalred.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${heal_redhealsperminutealive.toFixed(0)}/m alive)</span>`
+                    healerHealsDisplay.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${healerHealsPerMinuteAlive.toFixed(0)}/m alive)</span>`
+                } 
             }
         }
     }
