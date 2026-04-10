@@ -1406,9 +1406,16 @@ const updateLogRows = async (steamID) => {
     console.log("left column created")
     markScoreColumnComplete();
 
+    //If Jack's Log Combiner is active, shift the combiner buttons so they don't overlap with the match scores
+    const combinerButtons = document.getElementsByClassName("log_add_button");
+    //console.log(typeof(combinerButtons));
+    //console.log(combinerButtons);
+    const combinerButtonsShifted = (await getShowMatchScoresFlag() && combinerButtons.length > 0)
+
+    await combinerOffsetCompleted;
     for (let i = 0; i < numLogs; i++) {
         const curLog = logsListed[i];
-        const curLogLink = curLog.getElementsByTagName("a")[0].href;
+        const curLogLink = curLog.children[1].lastChild.href;
         const curLogID = curLogLink.substring(curLogLink.lastIndexOf("/") + 1, curLogLink.indexOf("#"));
         //console.log(curLogID);
 
@@ -1587,6 +1594,8 @@ const updateLogRows = async (steamID) => {
             //scoreElement.style.display = "inline";
             scoreElement.style.textAlign = "center";
             scoreElement.innerHTML = `${roundsWon} - ${roundsLost} - ${roundsTied}`;
+            if (combinerButtonsShifted) scoreElement.appendChild(scorePreview.children[0]);
+            //scoreElement.children[0].style.marginLeft = "-60px"
             scoreElement.style.padding = "6px";
             scoreElement.style.marginLeft = "0px";
             scoreElement.style.marginRight = "0px";
@@ -1864,6 +1873,9 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
     console.log("Not a logs.tf page, somehow")
 }
 
+let markCombinerOffsetComplete;
+const combinerOffsetCompleted = new Promise(res => {markCombinerOffsetComplete = res});
+
 window.onload = async function() {
     //console.log("onload")
     const pageURL = document.URL
@@ -1880,14 +1892,17 @@ window.onload = async function() {
                 for (let element of combinerButtons) {
                     let parentElement = element.parentNode;
                     //console.log(parentElement)
-                    let logElement = parentElement.parentNode;
+                    //console.log(parentElement.previousSibling)
+                    //let logElement = parentElement.parentNode;
                     let previousElement = parentElement.previousElementSibling;
                     //console.log(previousElement)
                     previousElement.appendChild(element);
-                    element.style.marginLeft = "-60px"
+                    element.style.left = "44px"
                 }
+                markCombinerOffsetComplete();
             } else {
                 console.log("no log combiner buttons to offset");
+                markCombinerOffsetComplete();
             }
         } else if (pageURL.length > 17) {
             console.log("onload singlelog")
