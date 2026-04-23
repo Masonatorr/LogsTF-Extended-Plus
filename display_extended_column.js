@@ -2102,71 +2102,11 @@ window.onload = async function() {
 
             //heals received per minute
             const logtime = document.getElementById("log-length");
-            
-            const heal_panels = document.getElementsByClassName("healspread")[0];
-            const heal_healtables = heal_panels.getElementsByClassName("healtable");
 
             const showPlayerHPM = await getShowPlayerHPMFlag();
-
-            if (showPlayerHPM) {
-                //console.log("yes")
-                //console.log(heal_healtables.length)
-                const heal_headerblu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-                const heal_headerred = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
-                const heal_headerbluheals = heal_headerblu.getElementsByTagName("th")[2];
-                const heal_headerredheals = heal_headerred.getElementsByTagName("th")[2];
-
-                //let heal_medstats = table.getElementsByClassName("medstats")
-                //let heal_medstats
-
-                const HealsBlu = heal_healtables[0].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-                //console.log(HealsBlu.length)
-                //console.log("yes")
-                //console.log(HealsBlu[1].getElementsByTagName("td")[2].innerText)
-                const HealsRed = heal_healtables[1].getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
-                //console.log(HealsRed.length)
-
-                const HPMHeaderBlu = heal_headerbluheals.cloneNode(true);
-                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
-                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
-                HPMHeaderBlu.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
-                heal_headerblu.insertBefore(HPMHeaderBlu, heal_headerblu.getElementsByTagName("th")[3]);
-
-                const HPMHeaderRed = heal_headerredheals.cloneNode(true);
-                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
-                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
-                HPMHeaderRed.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
-                heal_headerred.insertBefore(HPMHeaderRed, heal_headerred.getElementsByTagName("th")[3]);
-
-                //let HealsBluTotal = parseInt(HealsBlu);
-                //console.log("healsblutotal")
-                //console.log(HealsBluTotal)
-                //let HealsRedTotal = parseInt(HealsRed);
-
-                for (i = 0; i < HealsBlu.length; i++) {
-                    let HPMBlu = HealsBlu[i].getElementsByTagName("td")[2].cloneNode(true);
-                    //console.log(i)
-                    HPMBlu.innerText = (parseFloat(HealsBlu[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
-                    //console.log(HPMBlu.innerText)
-                    HealsBlu[i].insertBefore(HPMBlu, HealsBlu[i].getElementsByTagName("td")[3])
-                }
-
-                for (i = 0; i < HealsRed.length; i++) {
-                    let HPMRed = HealsRed[i].getElementsByTagName("td")[2].cloneNode(true);
-                    //console.log(i)
-                    HPMRed.innerText = (parseFloat(HealsRed[i].getElementsByTagName("td")[2].innerText) / parseFloat(logtime.innerText)).toFixed(0)
-                    //console.log(HPMRed.innerText)
-                    HealsRed[i].insertBefore(HPMRed, HealsRed[i].getElementsByTagName("td")[3])
-                }
-
-                //console.log("width");
-                //console.log(heal_healtables[0].style);
-                heal_healtables[0].style.width = "350px";
-                heal_healtables[1].style.width = "350px";
-            }
-
             const showMedicHPMA = await getShowMedicHPMAFlag();
-            if (showMedicHPMA) {
+
+            if (showMedicHPMA || showPlayerHPM) {
                 //console.log(pageURL.lastIndexOf("#"))
                 const curLogID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
                 //console.log("logid");
@@ -2226,7 +2166,28 @@ window.onload = async function() {
 
                     const healerHealsPerMinuteAlive = healerHeals / (healerTimeAlive / 60);
 
-                    healerHealsDisplay.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${healerHealsPerMinuteAlive.toFixed(0)}/m alive)</span>`
+                    if (showMedicHPMA) healerHealsDisplay.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${healerHealsPerMinuteAlive.toFixed(0)}/m alive)</span>`
+                
+                    if (showPlayerHPM) {
+                        const healHeader = healtable.getElementsByClassName("healsort")[0].getElementsByTagName("thead")[0].getElementsByTagName("tr")[0];
+                        const HPMHeader = healHeader.getElementsByTagName("th")[2].cloneNode(true);
+                        HPMHeader.getElementsByClassName("tablesorter-header-inner")[0].innerText = "HPM";
+                        HPMHeader.getElementsByClassName("tablesorter-header-inner")[0].classList.add("tip");
+                        HPMHeader.getElementsByClassName("tablesorter-header-inner")[0].setAttribute("data-original-title", "Heals Per Minute");
+                        healHeader.insertBefore(HPMHeader, healHeader.getElementsByTagName("th")[3]);
+
+                        const healRows = healtable.getElementsByClassName("healsort")[0].getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+
+                        for (row of healRows) {
+                            let HPM = row.getElementsByTagName("td")[2].cloneNode(true);
+                            HPM.innerText = (parseFloat(row.getElementsByTagName("td")[2].innerText) / (healerTimePlayed / 60)).toFixed(0)
+                            row.insertBefore(HPM, row.getElementsByTagName("td")[3])
+                        }
+
+                        //console.log("width");
+                        //console.log(heal_healtables[0].style);
+                        healtable.style.width = "auto";
+                    }
                 } 
             }
         } else if (pageURL.length <= 16 || pageURL.includes("tf/?p=") || pageURL.includes("tf/popular")) {
