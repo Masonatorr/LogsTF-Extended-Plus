@@ -1483,13 +1483,12 @@ const updateLogRows = async (steamID) => {
         const curLogID = curLogLink.substring(curLogLink.lastIndexOf("/") + 1, curLogLink.indexOf("#"));
         //console.log(curLogID);
 
-        
-        const logInfoStorage = window.sessionStorage.getItem(curLogID);
-        let logInfo;
-        const logTimestamp = new Date(logInfoStorage ? JSON.parse(logInfoStorage).info.date * 1000 : 0)
-        if (logInfoStorage && logTimestamp.setHours(logTimestamp.getHours() + 2) < Date.now()) {
+        const logInfoParsed = (logInfoStorage = true && window.sessionStorage.getItem(curLogID)) ? JSON.parse(logInfoStorage) : null;
+        console.log(logInfoParsed)
+        const logTimestamp = new Date(logInfoParsed && logInfoParsed.hasOwnProperty('info') ? logInfoParsed.info.date * 1000 : 0)
+        if (logInfoParsed && logTimestamp.setHours(logTimestamp.getHours() + 2) < Date.now()) {
             console.log("using saved info")
-			logInfo = JSON.parse(logInfoStorage);
+			logInfo = logInfoParsed;
         } else {
             console.log("logging new info")
             logInfo = await processLogInfo(curLogID);
