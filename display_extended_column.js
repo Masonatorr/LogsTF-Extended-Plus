@@ -3,6 +3,8 @@ const currentBrowser = isFirefox ? browser : chrome;
 
 const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
+//Alias API fetch requests into easier-to-type functions
+//These send the request data to background.js, which has less restrictions on fetch requests than the main script
 const getRGLProfile = async (steamID) => await sendMessageAndWait("rgl_profile", steamID);
 const getRGLProfilesBulk = async (steamIDList) => await sendMessageAndWait("rgl_profiles_bulk", steamIDList);
 const getETF2LProfile = async (steamID) => await sendMessageAndWait("etf2l_profile", steamID);
@@ -16,12 +18,14 @@ const getETF2LCompetitionByID = async (competitionID) => (await sendMessageAndWa
 const getRGLMatchByID = async (matchID) => await sendMessageAndWait("rgl_match_by_id", matchID);
 const getLogInfo = async (logID) => await sendMessageAndWait("log_info", logID);
 
+//Function for sending request data to background.js
 const sendMessageAndWait = async (type, inputData) =>
     await currentBrowser.runtime.sendMessage({
         type,
         inputData
     })
 
+//Alias fetching of saved browser flags for convenience
 const getShowMatchInfoFlag = async () => (await currentBrowser.storage.local.get("showMatchInfo"))
     .showMatchInfo;
 const getShowETF2LNameFlag = async () => (await currentBrowser.storage.local.get("showETF2LName"))
@@ -58,6 +62,7 @@ const getShowClassesPlayedFlag = async () => (await currentBrowser.storage.local
 const getShowOfficialMatchesFlag = async () => (await currentBrowser.storage.local.get("showOfficialMatches"))
 	.showOfficialMatches;
 
+//Used to convert RGL division names into numerical indexes (for example, to compare which div is higher)
 const RGLDivisions = Object.freeze({
     None: 0,
     Newcomer: 1,
@@ -68,6 +73,7 @@ const RGLDivisions = Object.freeze({
     Invite: 6,
 });
 
+//Inverse of above, converts indexes back into division names
 const RGLDivisionsInverse = Object.freeze({
     0: "None",
     1: "Newcomer",
@@ -78,6 +84,7 @@ const RGLDivisionsInverse = Object.freeze({
     6: "Invite",
 });
 
+//Used to convert ETF2L division names into numerical indexes (for example, to compare which div is higher)
 const ETF2LDivisions = Object.freeze({
     None: 0,
     Fresh: 1,
@@ -90,6 +97,7 @@ const ETF2LDivisions = Object.freeze({
     Premiership: 8,
 });
 
+//Inverse of above, converts indexes back into division names
 const ETF2LDivisionsInverse = Object.freeze({
     0: "None",
     1: "Fresh",
@@ -102,6 +110,7 @@ const ETF2LDivisionsInverse = Object.freeze({
     8: "Premiership",
 });
 
+//Dictates how to show a player's RGL division on single-log pages
 const RGLDivisionSpecs = Object.freeze({
     NA: {
         backgroundColor: "#dddddd",
@@ -145,6 +154,7 @@ const RGLDivisionSpecs = Object.freeze({
     },
 });
 
+//Dictates how to show a player's ETF2L division on single-log pages
 const ETF2LDivisionSpecs = Object.freeze({
     NA: {
         backgroundColor: "#dddddd",
@@ -198,6 +208,7 @@ const ETF2LDivisionSpecs = Object.freeze({
     },
 });
 
+//Dictates some stuff for showing class icons/stats on profile pages
 const ClassIconFormat = Object.freeze({
     scout: {
         title: "Scout",
@@ -237,6 +248,7 @@ const ClassIconFormat = Object.freeze({
     },
 });
 
+//Lookup table to convert every weapon ID from the logs into their actual ingame names
 const WeaponLookupTable = Object.freeze({
     //scout
         //primary
@@ -460,6 +472,8 @@ const OfficialCheckmarkColorShifts = Object.freeze({
     rglgg: "0deg",
     etf2l: "180deg"
 })
+
+//Takes the player's past teams and current gamemode and returns the highest div they've played in
 const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     if (pastTeams === undefined || pastTeams === null || pastTeams.length == 0) return RGLDivisions.None;
 
@@ -476,6 +490,7 @@ const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     return greatestNumericalDivisionPlayed;
 }
 
+//Takes the player's past teams and current gamemode and returns the latest div they've played in
 const getLatestDivisionPlayed = (pastTeams, gameMode) => {
     if (pastTeams === undefined || pastTeams === null || pastTeams.length == 0) return RGLDivisions.None;
 
@@ -489,6 +504,7 @@ const getLatestDivisionPlayed = (pastTeams, gameMode) => {
     return RGLDivisions.None;
 }
 
+//Takes the player's past teams and returns their current rgl team if applicable
 const getCurrentRGLTeam = async (pastTeams) => {
 	let SixesTeam = null;
 	let SixesTeamID = null;
@@ -500,12 +516,9 @@ const getCurrentRGLTeam = async (pastTeams) => {
 		HighlanderTeam,
 		HighlanderTeamID,
 	];
-	//console.log(pastTeams);
 	for (let gamemode = 0; gamemode < 2; gamemode++) {
-		//console.log("yes")
 		for (let i = 0; i < pastTeams.length; i++) {
 			if (pastTeams[i].formatName != (gamemode === 0 ? "Sixes" : "Highlander")) continue;
-			//if (RGLDivisions[pastTeams[i].divisionName] === undefined) continue; // To account for special division names like "Spec 2-day" from cups
 			if (pastTeams[i].leftAt != null) break;
 			if (gamemode === 0) {
 				SixesTeam = pastTeams[i].teamName
@@ -518,12 +531,6 @@ const getCurrentRGLTeam = async (pastTeams) => {
 			}
 		}
 	}
-	//console.log(
-	//	SixesTeam,
-	//	SixesTeamID,
-	//	HighlanderTeam,
-	//	HighlanderTeamID,
-	//)
 	return [
 		SixesTeam,
 		SixesTeamID,
@@ -532,7 +539,9 @@ const getCurrentRGLTeam = async (pastTeams) => {
 	];
 }
 
+//Takes the player's ETF2L profile and returns both their div and team info at the same time
 const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
+    //Default values will all be null
 	let SixesHighestDiv = null;
 	let SixesLatestDiv = null;
 	let SixesTeam = null;
@@ -542,6 +551,7 @@ const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
 	let HighlanderTeam = null;
 	let HighlanderTeamID = null;
 
+    //If the player profile is invalid, return all null
     if (profile === undefined || profile === null || profile.length === 0) {
         return [
 	        SixesHighestDiv,
@@ -555,40 +565,15 @@ const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
         ];
     }
 
-    //console.log("etf2l div and team")
-	//console.log(pastTeams);
-
-    //let teamsLeft = []
+    //Run once for each gamemode in this player's profile
 	for (let gamemode = 0; gamemode < profile.player.teams.length; gamemode++) {
-		//for (let i = 0; i < pastTeams.length; i++) {
-        //    const curTeam = pastTeams[i];
-        //    if (teamsLeft.includes(curTeam.team.name)) continue;
-        //    if (curTeam.type === "left") {
-        //        teamsLeft.push(curTeam.team.name)
-        //        continue;
-        //    }
-		//	if (curTeam.team.type != (gamemode === 0 ? "6v6" : "Highlander")) continue;
-        //    console.log(curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1))
-		//	if (gamemode === 0) {
-		//		SixesTeam = curTeam.team.name;
-		//		SixesTeamID = curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1);
-		//		break
-		//	} else {
-		//		HighlanderTeam = curTeam.team.name;
-		//		HighlanderTeamID = curTeam.team.url.substring(curTeam.team.url.lastIndexOf("/") + 1);
-		//		break
-		//	}
-		//}
-
         const gamemodeInfo = profile.player.teams[gamemode];
-        //console.log(profile.player.teams[gamemode])
-        //console.log(profile.player.name)
         const curGamemode = gamemodeInfo.type;
-        if (curGamemode === "6v6") {
+        if (curGamemode === "6v6") { //Collect 6s info
             SixesTeam = gamemodeInfo.name;
             SixesTeamID = gamemodeInfo.urls.self.substring(gamemodeInfo.urls.self.lastIndexOf("/") + 1);
 
-            const competitionsPlayed = Object.keys(gamemodeInfo.competitions)
+            const competitionsPlayed = Object.keys(gamemodeInfo.competitions);
             let highestDiv = null
             for (let i = competitionsPlayed.length - 1; i >= 0; i--) {
                 curCompetition = gamemodeInfo.competitions[competitionsPlayed[i]];
@@ -600,11 +585,13 @@ const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
                 }
             }
             SixesHighestDiv = ETF2LDivisionsInverse[highestDiv]
-        } else if (curGamemode === "Highlander") {
+        } else if (curGamemode === "Highlander") { //Collect HL info
             HighlanderTeam = gamemodeInfo.name;
             HighlanderTeamID = gamemodeInfo.urls.self.substring(gamemodeInfo.urls.self.lastIndexOf("/") + 1);
 
-            competitionsPlayed = Object.keys(gamemodeInfo.competitions)
+            competitionsPlayed = Object.keys(gamemodeInfo.competitions);
+
+            //Calculate highest div
             let highestDiv = null
             for (let i = competitionsPlayed.length - 1; i >= 0; i--) {
                 curCompetition = gamemodeInfo.competitions[competitionsPlayed[i]];
@@ -618,13 +605,6 @@ const getETF2LDivAndTeamInfo = async (profile/*, pastTeams*/) => {
             HighlanderHighestDiv = ETF2LDivisionsInverse[highestDiv]
         }
 	}
-
-	//console.log(
-	//	SixesTeam,
-	//	SixesTeamID,
-	//	HighlanderTeam,
-	//	HighlanderTeamID,
-	//)
 	return [
 	    SixesHighestDiv,
 	    SixesLatestDiv,
@@ -650,8 +630,6 @@ const getHighestRGLGamemodeTeam = async (pastTeams) => {
     const latestDivisionString6s = RGLDivisionsInverse[latestNumericalDivisionPlayed6s];
     const highestDivisionStringHL = RGLDivisionsInverse[highestNumericalDivisionPlayedHL];
     const latestDivisionStringHL = RGLDivisionsInverse[latestNumericalDivisionPlayedHL];
-	//console.log("6s highest/latest and HL highest/latest")
-	//console.log(highestDivisionString6s, latestDivisionString6s, highestDivisionStringHL, latestDivisionStringHL)
     return [
         highestDivisionString6s,
         latestDivisionString6s,
@@ -660,34 +638,7 @@ const getHighestRGLGamemodeTeam = async (pastTeams) => {
 	];
 }
 
-//const updateETF2LOnPage = async () => {
-//    for (let i = 0; i < playerRows.length; i++) {
-//        const steamID = playerRows[i].id.split("_")[1];
-//        const resETF2L = await getETF2LProfile(steamID);
-//        if (!resETF2L) return;
-//
-//        const leagueElement = playerRows[i].firstChild;
-//
-//        // Get rid of 'Loading...' message
-//        //leagueElement.innerHTML = "";
-//
-//        if (resETF2L.status != 200) {
-//            console.log(resETF2L);
-//            continue;
-//        }
-//
-//        // const data = await resETF2L.json();
-//        const data = await resETF2L;
-//        const etf2lLink = document.createElement("a");
-//        etf2lLink.innerHTML = data.player.name;
-//        etf2lLink.href = `https://etf2l.org/search/${steamID}/`;
-//        etf2lLink.target = "_blank";
-//        etf2lLink.style.backgroundColor = "rgb(144, 238, 144)";
-//        etf2lLink.style.padding = "6px";
-//        leagueElement.appendChild(etf2lLink);
-//    }
-//}
-
+//Display ETF2L username on single-log page
 const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     // Get rid of 'Loading...' message
     if (!getShowRGLTeamFlag()) leagueElement.innerHTML = "";
@@ -704,8 +655,8 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
 	if (getShowRGLTeamFlag()) etf2lLink.style.marginLeft = "6px";
     leagueElement.appendChild(etf2lLink);
 
+    //Determine whether the player is banned, and if so display ban info
     const banInfo = playerInfo.etf2l.banInfo;
-    //console.log(`baninfo: ${banInfo}`);
     if (banInfo == null) return;
     const banEndDate = banInfo.end;
     const banWarning = (banEndDate > (Date.now() / 1000));
@@ -715,7 +666,6 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     const banWarningSpan = document.createElement("span");
     banWarningSpan.innerHTML = " (BANNED)";
     etf2lLink.style.backgroundColor = "rgb(137, 0, 0)";
-	//rglLink.style.textColor = "rgb(255, 255, 255)"
 
     etf2lLink.appendChild(banWarningSpan);
 
@@ -725,13 +675,13 @@ const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
     etf2lLink.setAttribute("data-original-title", `Banned from ETF2L until ${new Date(banEndDate * 1000).toLocaleDateString()} for: ${banInfo.reason/*.replace(/\s/g, ' ')*/}`)
 }
 
+//Display ETF2L team on single-log page
 const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
-	//console.log("ran update team")
 	if (!playerInfo.etf2l.name) return;
-    //console.log(`gamemode: ${gamemode}`)
 	const teamName = (gamemode === "6s" ? playerInfo.etf2l.currentTeam6s : playerInfo.etf2l.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.etf2l.currentTeamID6s : playerInfo.etf2l.currentTeamIDHL);
 	if (!teamName) return;
+    //Copied from RGL team code, dunno if necessary
     if (teamName.includes("Free Agent -")) return;
 
 
@@ -744,25 +694,17 @@ const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	etf2lTeamLink.style.margin = "6px 0px 6px 0px";
 
 	leagueElement.appendChild(etf2lTeamLink);
-	
-	//console.log("finished team update")
-
-	//if (!banWarning) return;
 }
 
+//Display ETF2L division on single-log page
 const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
     let division;
     if (!playerInfo.etf2l.name) {
         return;
-        //if (!(["6s", "HL"].includes(playedGamemode))) return;
-        //if (!playerInfo.rgl.name) return;
-        //division = "NA";
     } else {
         const getHighestDivison = await getHighestDivisionPlayedFlag();
-        //console.log(playedGamemode);
         division = getHighestDivison ? (playedGamemode === "6s" ? playerInfo.etf2l.division6s : playedGamemode === "HL" ? playerInfo.etf2l.divisionHL : null) : (playedGamemode === "6s" ? playerInfo.etf2l.latestDivision6s : playedGamemode === "HL" ? playerInfo.etf2l.latestDivisionHL : 1);
         if (division == undefined) division = "None";
-        //console.log(division);
         if (division && !ETF2LDivisionSpecs[division]) {
             console.log(playerInfo);
             console.log("Error occurred for " + playerInfo.etf2l.name);
@@ -782,8 +724,6 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
     etf2lDivisionElement.style.padding = "2px";
     etf2lDivisionElement.style.marginLeft = "6px";
     if (!playerInfo.rgl.name) etf2lDivisionElement.style.marginRight = "-3px";
-    //etf2lDivisionElement.style.marginTop = "5px"
-    //etf2lDivisionElement.style.marginBottom = "5px"
     etf2lDivisionElement.style.border = "4px";
     etf2lDivisionElement.style.borderStyle = "solid";
     etf2lDivisionElement.style.borderColor = "rgb(144, 238, 144)";
@@ -791,9 +731,10 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
     leagueElement.appendChild(etf2lDivisionElement);
 }
 
+//Display RGL name on single-log page
 const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode) => {
-	//console.log("ran update name")
     if (!playerInfo.rgl.name) {
+        //If this log is 6s or HL and this player doesnt have an RGL or ETF2L profile, display "N/A" in place of their div
         if (!(["6s", "HL"].includes(playedGamemode)) && !playerInfo.etf2l.name) {
             const rglLink = document.createElement("a");
             rglLink.target = "_blank";
@@ -815,33 +756,28 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
     rglLink.style.padding = "6px";
     rglLink.style.margin = "6px 0px 6px 6px";
 
+    //Determine whether the player is banned, and if so display ban info
     const banWarning = playerInfo.rgl.banInfo;
-    //console.log(playerInfo)
-    //console.log(steamID)
 
     rglLink.innerHTML = playerInfo.rgl.name;
 
     leagueElement.appendChild(rglLink);
-
-    //console.log("ban warning " + banWarning);
     if (!banWarning) return;
 
     const banWarningSpan = document.createElement("span");
     banWarningSpan.innerHTML = " (BANNED)";
     rglLink.style.backgroundColor = "rgb(137, 0, 0)";
-	//rglLink.style.textColor = "rgb(255, 255, 255)"
 
     rglLink.appendChild(banWarningSpan);
 
-	rglLink.style.color = "rgb(255, 255, 255)"
+	rglLink.style.color = "rgb(255, 255, 255)";
 
-    rglLink.classList.add("tip")
-    //console.log(Date.parse(banWarning.endsAt))
+    rglLink.classList.add("tip");
     rglLink.setAttribute("data-original-title", `Banned from RGL until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason.replace(/(<.?br.?>)/g, ' ')}`)
 }
 
+//Display RGL team on single-log page
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
-	//console.log("ran update team")
 	if (!playerInfo.rgl.name) return;
 	const teamName = (gamemode === "6s" ? playerInfo.rgl.currentTeam6s : playerInfo.rgl.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.rgl.currentTeamID6s : playerInfo.rgl.currentTeamIDHL);
@@ -858,24 +794,18 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	rglTeamLink.style.margin = "6px 0px 6px 6px";
 
 	leagueElement.appendChild(rglTeamLink);
-	
-	//console.log("finished team update")
-
-	//if (!banWarning) return;
 }
 
+//Display RGL division on single-log page
 const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
     let division;
     if (!playerInfo.rgl.name) {
         if (!(["6s", "HL"].includes(playedGamemode))) return;
         if (playerInfo.etf2l.name) return;
-        console.log(`no usernames found for playerinfo: ${JSON.stringify(playerInfo)}`)
         division = "NA";
     } else {
         const getHighestDivison = await getHighestDivisionPlayedFlag();
-        //console.log(playedGamemode);
         division = getHighestDivison ? (playedGamemode === "6s" ? playerInfo.rgl.division6s : playedGamemode === "HL" ? playerInfo.rgl.divisionHL : null) : (playedGamemode === "6s" ? playerInfo.rgl.latestDivision6s : playedGamemode === "HL" ? playerInfo.rgl.latestDivisionHL : 1);
-        //console.log(division);
         if (!RGLDivisionSpecs[division]) {
             console.log(playerInfo);
             console.log("Error occurred for " + playerInfo.rgl.name);
@@ -901,12 +831,10 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
         rglDivisionElement.style.borderColor = "rgb(252, 179, 44)";
     }
 
+    //Detect if this element causes a line wrap, if so do some special formatting
     const oldHeight = leagueElement.offsetHeight;
     leagueElement.appendChild(rglDivisionElement);
     const newHeight = leagueElement.offsetHeight;
-
-    //console.log(`${oldHeight}, ${newHeight}`)
-    //console.log(leagueElement.children[leagueElement.children.length - 2])
     if (playerInfo.etf2l.name && newHeight > oldHeight && newHeight > 49) {
         leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
         leagueElement.insertBefore(document.createElement("br"), rglDivisionElement);
@@ -935,7 +863,6 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
     //Only fetch new info if it was last updated more than a day ago
     if (!localPlayerInfoJson || !localPlayerInfoJson.lastUpdated || (Date.now() - localPlayerInfoJson.lastUpdated) / 1000 > 86400) {
 
-        //const RGLProfile = RGLProfileList != "ratelimited" ? RGLProfileList[steamID] : await getRGLProfile(steamID);
         ETF2LProfile = (skipMode == "skipSome" && ![showETF2L, showETF2LTeam, showETF2LDivision].includes(true)) ||
                              (skipMode == "fetchSkipped" && [showETF2L, showETF2LTeam, showETF2LDivision].includes(true)) ?
                              null :
@@ -945,8 +872,6 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
                              (!RGLProfile) ?
                              null :
                              await getRGLPastTeams(steamID);
-        //const ETF2LPastTeams = await getETF2LPastTeams(steamID);
-        console.log(skipMode)
 
         if ([RGLProfile, ETF2LProfile, RGLPastTeams/* + ETF2LPastTeams*/].includes("ratelimited")) return "ratelimited";
 
@@ -974,36 +899,10 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
             ETF2LCurrentTeamStringHL,
             ETF2LCurrentTeamIDStringHL,
         ] = (skipMode == "skipSome" && !(showETF2LTeam && showETF2LDivision)) || (skipMode == "fetchSkipped" && (showETF2LTeam || showETF2LDivision)) ? new Array(8).fill(null) : await getETF2LDivAndTeamInfo(ETF2LProfile/*, ETF2LPastTeams*/);
-
-        //console.log([
-        //    ETF2LHighestDivisionString6s,
-        //    ETF2LLatestDivisionString6s,
-        //    ETF2LCurrentTeamString6s,
-        //    ETF2LCurrentTeamIDString6s,
-        //    ETF2LHighestDivisionStringHL,
-        //    ETF2LLatestDivisionStringHL,
-        //    ETF2LCurrentTeamStringHL,
-        //    ETF2LCurrentTeamIDStringHL,
-        //]);
-
-        //console.log(await getCurrentRGLTeam(pastTeams));
-        
-        //console.log(currentTeamString6s);
-
-        //const curTime = Math.floor(Date.now() / 1000);
-        //console.log(RGLProfile)
-        //console.log(RGLProfile ? RGLProfile.status.isBanned : 'no rgl')
-        //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
-        //console.log(RGLProfile)
     } else {
         console.log(`Player info was updated less than 1 day ago (${(((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 3600 : ((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) / 60).toFixed(2)} ${((Date.now() - localPlayerInfoJson.lastUpdated) / 1000) > 3600 ? "hours" : "minutes"} ago), skipping`)
     }
 
-    //const curTime = Math.floor(Date.now() / 1000);
-    //console.log(RGLProfile)
-    //console.log(RGLProfile ? RGLProfile.status.isBanned : 'no rgl')
-    //console.log(RGLProfile ? (RGLProfile.status.isBanned ? RGLProfile.banInformation : "no ban info") : '')
-    //console.log(RGLProfile)
     const playerInfoToInsert = {
         rgl: {
             name: RGLProfile ?
@@ -1116,12 +1015,11 @@ const fetchPlayerInfo = async (steamID, RGLProfile, skipMode = "default") => {
         },
         lastUpdated: Date.now(),
     };
-    //console.log(playerInfoToInsert.rgl.banInfo)
-	//console.log("highestDivisionString6s")
-	//console.log(playerInfoToInsert)
+
     return playerInfoToInsert;
 }
 
+//Iterates through each row of a single-log page and updates league info
 const updatePlayerRows = async (playerRows, rglNameHeader) => {
     const listOfSteamIDsInStorageThatMightNeedUpdating = [];
     const listOfSteamIDsInStorageThatMightNeedUpdatingIndexes = [];
@@ -1132,7 +1030,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
 	const numPlayers = listOfSteamIDs.length;
 	const gamemode = numPlayers < 16 && numPlayers >= 10 ? "6s" : numPlayers >= 16 && numPlayers < 22 ? "HL" : null;
-    //console.log(gamemode)
+    
 	currentBrowser.storage.local.set({playedGamemode: gamemode});
     
     const showETF2L = await getShowETF2LNameFlag();
@@ -1141,6 +1039,8 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
     const showRGL = await getShowRGLNameFlag();
     const showRGLTeam = await getShowRGLTeamFlag();
     const showRGLDivision = await getShowRGLDivisionFlag();
+
+
 	
 	if (gamemode === "6s" || gamemode === "HL")
 	{
@@ -1157,7 +1057,6 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
                                     ${(showRGLDivision && showETF2LDivision) ? '/' : ''}
                                     ${showRGLDivision ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}
                                     ${(showRGLDivision || showETF2LDivision) ? ' ' + gamemode + ' Division' : ''}`;
-		//if (await getShowRGLTeamFlag()) rglNameHeader.innerHTML = `<span style="background-color:rgb(252, 180, 46);">RGL Team</span> + `.concat(rglNameHeader.innerHTML);
 	}
 	else
 	{
@@ -1166,14 +1065,12 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
                                     ${showRGL ? '<span style="background-color:rgb(255, 203, 108);">RGL</span>' : ''}`;
 	}
 
-    //rglNameHeader.style.paddingLeft = "0px";
-
     let allPlayersCached = true;
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         if (!window.localStorage.getItem(listOfSteamIDs[i])) {
             allPlayersCached = false;
-            console.log("all players cached?")
-            console.log(allPlayersCached)
+            //console.log("all players cached?")
+            //console.log(allPlayersCached)
             break;
         }
     }
@@ -1189,25 +1086,20 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
         for (let i = 0; i < listOfSteamIDs.length; i++) {
             const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
-            //console.log(i - bulkProfileOffset)
-            //console.log(nextRGLProfile)
             const steamID = listOfSteamIDs[i];
-            //console.log(steamID)
+            
             if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
                 bulkProfileOffset++;
                 bulkProfileIndexes[i] = null;
-                console.log(`no RGL profile for player ${steamID}`)
+                //console.log(`no RGL profile for player ${steamID}`)
             } else {
                 bulkProfileIndexes[i] = i - bulkProfileOffset;
             }
         }
     }
-    //console.log(bulkProfileIndexes)
+    
     //Check if any league info is disabled
     const anyLeagueInfoDisabled = [showETF2L, showETF2LTeam, showETF2LDivision, showRGL, showRGLTeam, showRGLDivision].includes(false)
-    console.log([showETF2L, showETF2LTeam, showETF2LDivision, showRGL, showRGLTeam, showRGLDivision])
-    console.log("anyLeagueInfoDisabled")
-    console.log(anyLeagueInfoDisabled)
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
@@ -1253,12 +1145,6 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
             }
         }
 
-        // true/false
-        //const showETF2L = await getShowETF2LNameFlag();
-        //const showRGL = await getShowRGLNameFlag();
-        //const showRGLTeam = await getShowRGLTeamFlag();
-        //const showRGLDivision = await getShowRGLDivisionFlag();
-
         showETF2LTeam && (gamemode === "6s" || gamemode === "HL") && updateETF2LTeamOnPage(gamemode, playerInfo, leagueElement);
         showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
         showETF2L && updateETF2LNameOnPage(steamID, playerInfo, leagueElement);
@@ -1271,14 +1157,12 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         RGLProfileList = await getRGLProfilesBulk(listOfSteamIDs);
         for (let i = 0; i < listOfSteamIDs.length; i++) {
             const nextRGLProfile = RGLProfileList[i - bulkProfileOffset];
-            //console.log(i - bulkProfileOffset)
-            //console.log(nextRGLProfile)
             const steamID = listOfSteamIDs[i];
-            //console.log(steamID)
+            
             if (i - bulkProfileOffset >= RGLProfileList.length || nextRGLProfile.steamId != steamID) {
                 bulkProfileOffset++;
                 bulkProfileIndexes[i] = null;
-                console.log(`no RGL profile for player ${steamID}`)
+                //console.log(`no RGL profile for player ${steamID}`)
             } else {
                 bulkProfileIndexes[i] = i - bulkProfileOffset;
             }
@@ -1291,17 +1175,14 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
         const originalIndex = listOfSteamIDsInStorageThatMightNeedUpdatingIndexes[i];
         if (bulkProfileIndexes[originalIndex] != null && steamID != RGLProfileList[bulkProfileIndexes[originalIndex]].steamId) {
-            console.log("error! steamid and profile id do not match!!!")
+            console.log("error! steamid and profile id do not match!!! if you see this message report this to Masonator w/ the link to this log")
             console.log(steamID)
             console.log(RGLProfileList[bulkProfileIndexes[originalIndex]])
         }
         const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[originalIndex] != null ? RGLProfileList[bulkProfileIndexes[originalIndex]] : null);
         if (playerInfoToInsert === "ratelimited") continue;
-        //console.log("playerinfo")
-        //console.log(playerInfoToInsert)
+        
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
-        //console.log(JSON.parse(window.localStorage.getItem(steamID)))
-        //console.log(steamID)
     };
 
     //If any fetches were skipped, do them here
@@ -1310,17 +1191,14 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
         const originalIndex = listOfSteamIDsInStorageThatSkippedFetchesIndexes[i];
         if (bulkProfileIndexes[originalIndex] != null && steamID != RGLProfileList[bulkProfileIndexes[originalIndex]].steamId) {
-            console.log("error! steamid and profile id do not match!!!")
+            console.log("error! steamid and profile id do not match!!! if you see this message report this to Masonator w/ the link to this log")
             console.log(steamID)
             console.log(RGLProfileList[bulkProfileIndexes[originalIndex]])
         }
         const playerInfoToInsert = await fetchPlayerInfo(steamID, bulkProfileIndexes[originalIndex] != null ? RGLProfileList[bulkProfileIndexes[originalIndex]] : null , "fetchSkipped");
         if (playerInfoToInsert === "ratelimited") continue;
-        //console.log("playerinfo")
-        //console.log(playerInfoToInsert)
+        
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
-        //console.log(JSON.parse(window.localStorage.getItem(steamID)))
-        //console.log(steamID)
     };
 }
 
@@ -1340,20 +1218,20 @@ const keysToRemove = [
 
 const processLogInfo = async (logID) => {
     const logInfo = await getLogInfo(logID);
-    //console.log(logInfo);
     if (logInfo === "ratelimited") return "ratelimited";
-    //console.log(steamID3);
+
+    //Remove a bunch of unnecessary info from the log info before caching it, saves cache space
     for (key of keysToRemove) delete logInfo[key];
 
     logInfo.rounds = Object.keys(logInfo.rounds).length;
-    //delete logInfo.info;
-    //console.log(logInfo);
+
     return logInfo;
 }
 
 let markScoreColumnComplete;
 const scoreColumnCompleted = new Promise(res => {markScoreColumnComplete = res});
 
+//On profile/main pages, iterate through all listed logs and 
 const updateLogRows = async (steamID) => {
     const logTable = document.getElementsByClassName("loglist")[0];
 
@@ -1391,7 +1269,6 @@ const updateLogRows = async (steamID) => {
             const classIconsList = document.createElement("td");
             classIconsList.style.width = "auto";
             classIconsList.style.minWidth = "50px";
-            //classIconsList.style.maxWidth = "75px";
             classIconsList.style.backgroundColor = "#ffffff00";
             classIconsList.style.fontWeight = "bold";
             classIconsList.classList.add("center", "classlist");
@@ -1402,15 +1279,9 @@ const updateLogRows = async (steamID) => {
 
         if (showMatchScores) {
             const scorePreview = document.createElement("td");
-            //scorePreview.style.width = "75px";
             scorePreview.style.backgroundColor = "#ffffff00";
             scorePreview.style.fontWeight = "bold";
             scorePreview.classList.add("center", "scorecontainer");
-            //scorePreview.style.width = "auto !important"
-            //scorePreview.style.border = "0px !important"
-            //scorePreview.style.padding = "0px !important"
-            //scorePreview.style.height = "auto !important"
-            //scorePreview.style = "background-color:#ffffff00;font-weight:bold"
             scorePreview.innerText = "-";
 
             curLog.insertBefore(scorePreview, curLog.children[0]);
@@ -1421,26 +1292,15 @@ const updateLogRows = async (steamID) => {
 
     //If Jack's Log Combiner is active, shift the combiner buttons so they don't overlap with the match scores
     const combinerButtons = document.getElementsByClassName("log_add_button");
-    //console.log(typeof(combinerButtons));
-    //console.log(combinerButtons);
     const combinerButtonsShifted = (await getShowMatchScoresFlag() && combinerButtons.length > 0)
 
     await combinerOffsetCompleted;
 
     if (await getShowOfficialMatchesFlag()) {
         const firstLogTimestamp = parseInt(logsListed[0].childNodes[7].getAttribute("data-timestamp")) + 5;
-        //console.log(logsListed)
-        //console.log(logsListed[0].childNodes)
-        //console.log(logsListed[0].childNodes[7])
-        //console.log(firstLogTimestamp)
-        //console.log(new Date(firstLogTimestamp * 1000))
         const lastLogTimestamp = parseInt(logsListed[logsListed.length - 1].childNodes[7].getAttribute("data-timestamp")) - 5;
-        //console.log(lastLogTimestamp)
-        //console.log(new Date(lastLogTimestamp * 1000))
 
         const logsOnPage = (await getLogMatchInfoBulk({steamID64: steamID, startTime: lastLogTimestamp, endTime: firstLogTimestamp})).logs
-
-        console.log(logsOnPage);
 
         logsOnPage.forEach(async (log) => {
             let logID = log.logid
@@ -1448,21 +1308,18 @@ const updateLogRows = async (steamID) => {
 
             if (logElement != null) {
                 if (log.league != null) {
-                    //console.log(log)
                     const formattedMatchInfo = await getOrSaveCachedLogInfo(logID, log);
-                    //console.log(formattedMatchInfo)
                     const matchLink = formattedMatchInfo.matchLink;
-                    //console.log(matchLink)
-                    //const matchLink = log.league === "etf2l" ? `https://etf2l.org/matches/${log.matchid}/` : log.league === "rglgg" ? `https://rgl.gg/Public/Match?m=${log.matchid}` : ``;
                     console.log("official found!")
+
                     const matchHyperlink = document.createElement("a");
                     matchHyperlink.href = matchLink;
                     matchHyperlink.alignItems = "center"
                     matchHyperlink.style.marginRight = "3px";
+
                     const checkmark = document.createElement("img");
                     checkmark.id = "official-match-icon";
                     checkmark.src = currentBrowser.runtime.getURL("icons/official-match-icon.png");
-                    //console.log(browser.runtime.getURL("icons/official-match-icon.png"))
                     checkmark.width = 16;
                     checkmark.height = 16;
                     checkmark.style.filter = `hue-rotate(${OfficialCheckmarkColorShifts[log.league]})`;
@@ -1471,12 +1328,6 @@ const updateLogRows = async (steamID) => {
                     checkmark.onmouseenter = function(){showOfficialPopover(formattedMatchInfo, checkmark)};
                     checkmark.onmouseleave = function(){deleteOfficialPopover()};
                     matchHyperlink.appendChild(checkmark);
-                    //matchHyperlink.innerHTML = `<img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);">`
-                    //const matchHyperlink2 = DOMParser.parse(`<a href="${matchLink}"><img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);"></a>`);
-                    //console.log(matchHyperlink2)
-                    //`<a href="${matchLink}">
-                    //        <img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="  }">
-                    //    </a>`
                     logElement.children[1].insertBefore(matchHyperlink, logElement.children[1].children[0]);
                 }
             } else {
@@ -1489,10 +1340,8 @@ const updateLogRows = async (steamID) => {
         const curLog = logsListed[i];
         const curLogLink = curLog.children[1].lastChild.href;
         const curLogID = curLogLink.substring(curLogLink.lastIndexOf("/") + 1, curLogLink.indexOf("#"));
-        //console.log(curLogID);
 
         const logInfoParsed = (logInfoStorage = true && window.sessionStorage.getItem(curLogID)) ? JSON.parse(logInfoStorage) : null;
-        console.log(logInfoParsed)
         const logTimestamp = new Date(logInfoParsed && logInfoParsed.hasOwnProperty('info') ? logInfoParsed.info.date * 1000 : 0)
         if (logInfoParsed && logTimestamp.setHours(logTimestamp.getHours() + 2) < Date.now()) {
             console.log("using saved info")
@@ -1521,14 +1370,10 @@ const updateLogRows = async (steamID) => {
     
         const steamID64 = steamID;
         const steamID64Shortened = steamID64.substring(steamID64.length - 13)
-        //console.log(`steamid64shortened: ${steamID64Shortened}`)
         const steamID3 = `[U:1:${steamID64Shortened - steamID64BaseShortened}]`;
-        //console.log(`steamid3: ${steamID3}`)
     
         const playerInfo = logInfo.players[steamID3];
-        //console.log(playerInfo);
         const playerClassesPlayed = playerInfo.class_stats;
-        //console.log(playerClassesPlayed)
 
         const gameDuration = logInfo["length"]
         
@@ -1543,20 +1388,16 @@ const updateLogRows = async (steamID) => {
                 const classIcon = document.createElement("i");
 
                 let dataString = `<table class='log table'><thead><tr><th>Played</th><th>K</th><th>A</th><th>D</th><th>DA</th><th>DA/M</th></tr></thead><tbody><tr><td>${Math.floor(classPlayed.total_time / 60)}:${(classPlayed.total_time % 60).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</td><td>${classPlayed.kills}</td><td>${classPlayed.assists}</td><td>${classPlayed.deaths}</td><td>${classPlayed.dmg}</td><td>${(classPlayed.dmg / (classPlayed.total_time / 60)).toFixed(0)}</td></tr></table>`;
-                //onsole.log(classPlayed.weapon);
-                //onsole.log(Object.keys(classPlayed.weapon).length);
 
                 let weaponsUsed = [];
                 const weaponsUsedKeys = Object.keys(classPlayed.weapon);
-                //console.log(weaponsUsedKeys);
+                
                 let alreadyHasPistol = false;
                 let hasScoutPistol = false;
                 let firstPistolIndex = -1
                 for (k = 0; k < weaponsUsedKeys.length; k++) {
                     if (weaponsUsedKeys[k] in ["pistol", "pistol_scout"]) {
-                        //console.log("pistol!")
                         if (alreadyHasPistol) {
-                            //console.log("merging!")
                             weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
                             weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
                             weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
@@ -1567,28 +1408,9 @@ const updateLogRows = async (steamID) => {
                         }
                         alreadyHasPistol = true
                     };
-                    //if (weaponsUsedKeys[k] == "pistol_scout") {
-                    //    //console.log("scout pistol!")
-                    //    hasScoutPistol = true
-                    //    if (hasPistol) {
-                    //        //console.log("merging!")
-                    //        weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
-                    //        weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
-                    //        weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
-                    //        weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
-                    //        weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
-                    //        continue;
-                    //    } else {
-                    //        firstPistolIndex = k;
-                    //    }
-                    //};
                     weaponsUsed.push([weaponsUsedKeys[k], classPlayed.weapon[weaponsUsedKeys[k]]]);
-                    //console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
                 }
-                //console.log(weaponsUsed);
                 weaponsUsed = weaponsUsed.sort((a, b) => {
-                    //console.log(a[1].kills);
-                    //console.log(b[1].kills);
                     if (a[1].kills > b[1].kills) {
                         return -1
                     } else if (a[1].kills == b[1].kills) {
@@ -1601,23 +1423,19 @@ const updateLogRows = async (steamID) => {
                         }
                     }
                 });
-                //console.log(weaponsUsed);
                 const weaponKeys = Object.keys(weaponsUsed)
                 if (weaponKeys.length > 0) {
                     let stringToInsert = ""
                     for (k = 0; k < weaponKeys.length; k++) {
                         const curWeapon = weaponsUsed[k][1]
-                        //console.log(curWeapon);
                         if (curWeapon.kills == 0 && curWeapon.dmg == 0 && curWeapon.shots == 0) continue;
                         stringToInsert = `${stringToInsert}<tr><td>${WeaponLookupTable[weaponsUsed[k][0]]}</td><td>${curWeapon.kills}${weaponsUsed.length == 1 ? "" : classPlayed.kills > 0 ? " (" + ((curWeapon.kills / classPlayed.kills) * 100).toFixed(0) + "%)" : ""}</td><td>${weaponsUsed[k][0] == "world" ? "-" : curWeapon.dmg}${weaponsUsed.length == 1 || weaponsUsed[k][0] == "world" ? "" : classPlayed.dmg > 0 ? " (" + ((curWeapon.dmg / classPlayed.dmg) * 100).toFixed(0) + "%)" : ""}<td>${curWeapon.shots > 0 ? (((curWeapon.hits / curWeapon.shots) * 100).toFixed(0)) + "%" : "-"}</td></td></tr>`;
                     }
-                    //console.log(stringToInsert);
                     dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Weapon</th><th>K</th><th>DA</th><th>Acc</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
                 }
 
                 if (classPlayedName === "medic" && playerInfo.heal > 0) {
                     const stringToInsert = `<tr><td style="text-align: center">${playerInfo.heal}<br>(${(playerInfo.heal / (gameDuration / 60)).toFixed(0)}/m)</td><td>${playerInfo.ubertypes.hasOwnProperty("medigun") ? playerInfo.ubertypes.medigun : 0}</td><td>${playerInfo.ubertypes.hasOwnProperty("kritzkrieg") ? playerInfo.ubertypes.kritzkrieg : 0}</td><td>${playerInfo.drops}</td><td>${playerInfo.medicstats.avg_time_to_build != undefined ? parseFloat(playerInfo.medicstats.avg_time_to_build).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_time_before_using != undefined ? parseFloat(playerInfo.medicstats.avg_time_before_using).toFixed(1) + "s" : "-"}</td><td>${playerInfo.medicstats.avg_uber_length != undefined ? parseFloat(playerInfo.medicstats.avg_uber_length).toFixed(1) + "s" : "-"}</td></tr>`;
-                    //console.log(stringToInsert);
                     dataString = `${dataString}<hr><table class='log table'><thead><tr><th>Heals</th><th style="text-align: center">Ü</th><th style="text-align: center">Kr</th><th>Drops</th><th style="text-align: center">Time to<br>Build</th><th style="text-align: center">Time to<br>Use</th><th style="text-align: center">Uber<br>Time</th></tr></thead><tbody>${stringToInsert}</tbody></table>`;
                 }
 
@@ -1660,12 +1478,9 @@ const updateLogRows = async (steamID) => {
             scoreElement.style.backgroundColor = roundsWon > roundsLost ? "#48a148" : roundsWon < roundsLost ? "#a14848" : "#a1a1a1";
             scoreElement.style.color = "white";
             scoreElement.style.fontWeight = "bold";
-            //scoreElement.style.minWidth = "35px";
-            //scoreElement.style.display = "inline";
             scoreElement.style.textAlign = "center";
             scoreElement.innerHTML = `${roundsWon} - ${roundsLost} - ${roundsTied}`;
             if (combinerButtonsShifted) scoreElement.appendChild(scorePreview.children[0]);
-            //scoreElement.children[0].style.marginLeft = "-60px"
             scoreElement.style.padding = "6px";
             scoreElement.style.marginLeft = "0px";
             scoreElement.style.marginRight = "0px";
@@ -1680,11 +1495,7 @@ const getMatchData = async (playersInLog, logTime, gamemode, logID) => {
     const startTime = logTime.setHours(logTime.getHours()-1)/1000
     const endTime = logTime.setHours(logTime.getHours()+1)/1000
     const possibleMatches = (await getLogMatchInfo({players: playersInLog, startTime: startTime, endTime: endTime, gamemode: gamemode === "6s" ? "sixes" : "highlander"})).logs;
-    //console.log(possibleMatches)
     correctMatch = findDictInArray(possibleMatches, "logid", logID);
-    //console.log(possibleMatches[0]['logid'])
-    //console.log(logID)
-    //console.log(correctMatch)
     return correctMatch;
 }
 
@@ -1695,16 +1506,10 @@ const showMatchInfo = async (playerRows) => {
 
     const dateTime = document.getElementsByClassName("datefield")[0];
     const timestamp = new Date(dateTime.getAttribute("data-timestamp") * 1000);
-    //console.log(dateTime.getAttribute("data-timestamp") * 1000)
 
     const gamemode = await getPlayedGamemodeFlag();
 
     const logID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
-
-    //let competitionHeaderText = '';
-    //let matchHeaderText = '';
-    //let competitionLink = '';
-    //let matchLink = '';
 
     const logDateHeader = document.getElementById("log-date");
 
@@ -1720,111 +1525,8 @@ const showMatchInfo = async (playerRows) => {
     matchHeader.appendChild(matchHeaderHyperlink);
     competitionHeader.after(matchHeader);
 
-    //const logInfoStorage = window.localStorage.getItem(logID);
     const logInfo = await getOrSaveCachedLogInfo(logID, null, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader);
-    console.log(logInfo)
     if (logInfo == null) return;
-
-    //if (logInfoStorage) {
-    //    console.log("existing match info")
-//
-    //    if (logInfoStorage != "none") {
-    //        logInfo = JSON.parse(logInfoStorage);
-    //        competitionHeaderText = logInfo.competitionHeaderText;
-    //        matchHeaderText = logInfo.matchHeaderText;
-    //        competitionLink = logInfo.competitionLink;
-    //        matchLink = logInfo.matchLink;
-    //    } else {
-    //        console.log("no comp match associated")
-    //        matchHeader.innerText = "No Match Found";
-    //    }
-    //} else {
-    //    console.log("new match info")
-//
-    //    const matchInfo = await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
-    //    //console.log(matchInfo);
-//
-    //    if (matchInfo.league) {
-    //        console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
-//
-    //        const league = matchInfo.league;
-    //        const matchID = matchInfo.matchid;
-    //        switch(league) {
-    //            case "etf2l":
-    //                //matchHeader.innerText = "Loading..."
-//
-    //                matchLink = `https://etf2l.org/matches/${matchID}/`;
-//
-    //                const etf2lMatchInfo = await getETF2LMatchByID(matchID);
-    //                //console.log(etf2lMatchInfo)
-//
-    //                matchHeaderText = `${etf2lMatchInfo.division.name} - ${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
-//
-    //                const competitionID = etf2lMatchInfo.competition.id;
-    //                //console.log(competitionID)
-    //                const competitionInfo = await getETF2LCompetitionByID(competitionID);
-//
-    //                competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
-//
-    //                if (competitionInfo.archived) {
-    //                    competitionLink = `https://etf2l.org/etf2l/archives/${competitionID}/1/`;
-    //                } else {
-    //                    competitionLink = `https://etf2l.org/${competitionHeader.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
-    //                }
-    //                //console.log(competitionLink);
-    //                break;
-    //            case "rgl":
-    //                //matchHeader.innerText = "Loading..."
-//
-    //                matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
-    //                //console.log(matchLink)
-//
-    //                const RGLMatchInfo = await getRGLMatchByID(matchID)
-//
-    //                competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
-    //                competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
-    //                //console.log(competitionLink)
-//
-    //                matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
-    //                break;
-    //            default:
-    //                console.log(`unknown league ${league}! report this to me (masonator) so I can add support`)
-    //                return;
-    //        }
-//
-    //        const matchInfoToSave = {
-    //            competitionHeaderText: competitionHeaderText,
-    //            matchHeaderText: matchHeaderText,
-    //            competitionLink: competitionLink,
-    //            matchLink: matchLink
-    //        }
-//
-    //        window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
-    //        //matchHeader.innerText = "";
-    //    } else {
-    //        console.log(`no match found for log ${logID}`);
-    //        let timestampPlus30Minutes = new Date(timestamp.getTime());
-    //        timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
-    //        //console.log(timestamp.getTime())
-    //        //console.log(timestampPlus30Minutes);
-    //        if (timestampPlus30Minutes < Date.now()) {
-    //            window.localStorage.setItem(logID, "none");
-    //            console.log("marking log as not being associated with any competitive matches");
-    //            matchHeader.innerText = "No Match Found";
-    //        } else {
-    //            //console.log(Date.now())
-    //            //console.log(timestamp.getTime())
-    //            //console.log(Date.now() - timestamp.getTime())
-    //            //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
-    //            //console.log(timestamp.getTime())
-    //            console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
-    //            matchHeader.innerText = "No Match Found, Check Again Later";
-    //        }
-    //    }
-    //}
-
-    //const rightHeader = document.getElementsByClassName("log-header-right")[0];
-    //const uploadedByHeader = document.getElementById("log-uploader");
 
     competitionHeaderHyperlink.href = logInfo.competitionLink;
     competitionHeaderHyperlink.innerText = logInfo.competitionHeaderText;
@@ -1856,30 +1558,16 @@ const showIconPopover = (logInfo, classIcon, title) => {
 
     classIcon.after(classPopover);
 
-    //console.log(window.devicePixelRatio);
-    //console.log(classPopover.offsetWidth);
-    //console.log(classPopover.offsetHeight);
     const zoom = window.devicePixelRatio;
-    //console.log(zoom);
-    //console.log((classPopover.offsetWidth * 0.5) + (30 * zoom))
-    //console.log(classIconPos.top);
-    //console.log(classIconPos.left);
-    //console.log(document.offsetWidth);
-    //console.log(document.getElementsByClassName("container main")[0].offsetWidth - document.getElementsByTagName("body")[0].offsetWidth);
-    //console.log(document.getElementsByClassName("container main")[0].offsetHeight - document.getElementsByTagName("body")[0].offsetHeight);
     const extraOffsetWidth = Math.max(0, -0.495 * (document.getElementsByClassName("container main")[0].offsetWidth - document.getElementsByTagName("body")[0].offsetWidth));
-    //const extraOffsetHeight = Math.max(0, -0.9 * (document.getElementsByClassName("container main")[0].offsetHeight - document.getElementsByTagName("body")[0].offsetHeight));
     classPopover.style.top = `${((classIconPos.top + window.scrollY)) - classPopover.offsetHeight - 75}px`;
     classPopover.style.left = `${((classIconPos.left + window.scrollX) - extraOffsetWidth) - (classPopover.offsetWidth * 0.5) + (8 * zoom)}px`;
-    //console.log(classPopover.style.top);
-    //console.log(classPopover.style.left);
     classPopover.position = "absolute"
     
-    console.log("popover shown");
+    //console.log("popover shown");
 }
 
 const deleteIconPopover = () => {
-    //console.log(document.getElementsByClassName("popover top in"));
     document.getElementsByClassName("popover top in")[0].remove();
 }
 
@@ -1892,11 +1580,6 @@ const showOfficialPopover = (matchInfo, checkmark) => {
     officialPopoverArrow = document.createElement("div");
     officialPopoverArrow.classList.add("arrow");
     officialPopover.appendChild(officialPopoverArrow);
-
-    //officialPopoverTitle = document.createElement("h3");
-    //officialPopoverTitle.classList.add("popover-title");
-    //officialPopoverTitle.innerText = matchInfo.competitionHeaderText;
-    //officialPopover.appendChild(officialPopoverTitle);
 
     officialPopoverContent = document.createElement("div");
     officialPopoverContent.classList.add("popover-content");
@@ -1918,7 +1601,7 @@ const showOfficialPopover = (matchInfo, checkmark) => {
     
     officialPopover.position = "absolute"
     
-    console.log("popover shown");
+    //("popover shown");
 }
 
 const deleteOfficialPopover = () => {
@@ -1927,25 +1610,18 @@ const deleteOfficialPopover = () => {
 
 
 const pageURL = document.URL
-console.log(pageURL);
-//window.localStorage.clear();
 if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
     if (pageURL.includes("profile")) {
-        //console.log(pageURL);
         console.log("Parsing player profile stats and info!")
 
         const steamID = pageURL.substring(pageURL.indexOf("profile") + 8, pageURL.lastIndexOf("?") != -1 ? pageURL.lastIndexOf("?") : pageURL.length);
-        //console.log(steamID);
 
         const mainElement = document.getElementsByClassName("container main")[0];
         const tableElement = document.getElementsByClassName("clear")[0];
         mainElement.style = "width: fit-content !important; min-width: 980px !important";
-        //mainElement.style.minWidth = "980px !important";
-        //mainElement.style.width = "auto !important"
 
         updateLogRows(steamID);
     } else if (pageURL.length > 16 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) {
-        //console.log(pageURL);
         console.log("Parsing single log stats and info!")
 
         let classIcons = document.getElementsByClassName("classicon");
@@ -1961,7 +1637,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
             dataToDisplay = dataToDisplay.replace(/((?<=<th>D<\/th><th>DA)<\/th>)/g, `</th><th>DA\/M</th>`); //add dpm header
             dataToDisplay = dataToDisplay.replace(/(<\/td>(?=<\/tr><\/table>))/g, `</td><td>${(parseInt(damageDone) / (secondsPlayed / 60)).toFixed(0)}</td>`);
-            
+
             icon.setAttribute("data-content", dataToDisplay);
         }
 
@@ -1986,7 +1662,6 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
             for (let i = 0; i < playerRows.length; i++) {
                 const leagueData = document.createElement("td");
-                // rglName.innerHTML = "Loading...";
                 leagueData.innerHTML = "";
                 leagueData.style.padding = "2px 10px 2px";
                 playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
@@ -2007,25 +1682,18 @@ let markCombinerOffsetComplete;
 const combinerOffsetCompleted = new Promise(res => {markCombinerOffsetComplete = res});
 
 window.onload = async function() {
-    //console.log("onload")
     const pageURL = document.URL
     if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
         console.log("valid page")
         if (pageURL.includes("profile")) {
             const combinerButtons = document.getElementsByClassName("log_add_button");
-            //console.log(typeof(combinerButtons));
-            //console.log(combinerButtons);
             if (await getShowMatchScoresFlag() && combinerButtons.length > 0) {
                 await scoreColumnCompleted;
                 console.log("offsetting log combiner buttons!");
                 this.document.getElementsByClassName("loglist")[0].style.marginLeft = "11px"
                 for (let element of combinerButtons) {
                     let parentElement = element.parentNode;
-                    //console.log(parentElement)
-                    //console.log(parentElement.previousSibling)
-                    //let logElement = parentElement.parentNode;
                     let previousElement = parentElement.previousElementSibling;
-                    //console.log(previousElement)
                     previousElement.appendChild(element);
                     element.style.left = "44px"
                 }
@@ -2058,7 +1726,6 @@ window.onload = async function() {
 
                 for (let i = 0; i < playerRows.length; i++) {
                     const leagueData = document.createElement("td");
-                    // rglName.innerHTML = "Loading...";
                     leagueData.innerHTML = "";
                     leagueData.style.padding = "2px 10px 2px";
                     playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
@@ -2068,8 +1735,6 @@ window.onload = async function() {
 
                 showMatchInfo(playerRows);
             }
-
-            //damage % and damage efficiency
             const table = document.getElementById("players");
             const headers = table.getElementsByClassName("tablesorter-headerRow")[0];
             const rows = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
@@ -2084,8 +1749,6 @@ window.onload = async function() {
             const teamOrTotalDamage = await getDamagePercentTotalOrTeamFlag();
 
             const showDamageEfficiency = await getShowDamageEfficiencyFlag();
-            //console.log("show damage efficiency")
-            //console.log(showDamageEfficiency);
 
             const showDamagePercent = await getShowDamagePercentFlag();
 
@@ -2103,22 +1766,15 @@ window.onload = async function() {
                 headers.insertBefore(headerDAPercent, headerDAM);
             }
 
-            //let DAtotal = parseInt(DARed) + parseInt(DABlu);
-
             Array.from(rows)
                 .forEach(processRow, [DARed, DABlu, teamOrTotalDamage, showDamageEfficiency, showDamagePercent]);
-
-            //heals received per minute
             const logtime = document.getElementById("log-length");
 
             const showPlayerHPM = await getShowPlayerHPMFlag();
             const showMedicHPMA = await getShowMedicHPMAFlag();
 
             if (showMedicHPMA || showPlayerHPM) {
-                //console.log(pageURL.lastIndexOf("#"))
                 const curLogID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
-                //console.log("logid");
-                //console.log(curLogID);
                 const logInfoStorage = window.sessionStorage.getItem(curLogID);
                 let logInfo;
                 const logTimestamp = new Date(parseInt(document.getElementsByClassName("datefield")[0].getAttribute("data-timestamp")) * 1000);
@@ -2144,7 +1800,6 @@ window.onload = async function() {
                     let healerTimePlayed;
                     let healerDeaths;
                     const healerUsername = healtable.getElementsByTagName("h6")[0].innerText;
-                    //console.log(healerUsername)
                     
                     const healerHealsDisplay = healtable.getElementsByClassName("medval")[0];
 
@@ -2153,9 +1808,7 @@ window.onload = async function() {
                     const listOfSteamIDs = Object.keys(logInfo.names);
                     const listOfNames = logInfo.names;
                     for (let steamID of listOfSteamIDs) {
-                        //console.log(listOfNames[steamID])
                         if (listOfNames[steamID] === healerUsername) {
-                            //console.log("found player")
                             healerSteamID3 = steamID
                             const healerClassesPlayed = logInfo.players[healerSteamID3].class_stats;
                             for (let classPlayed of healerClassesPlayed) {
@@ -2167,8 +1820,6 @@ window.onload = async function() {
                             break;
                         }
                     }
-                
-                    //const playerInfo = logInfo.players[steamID3];
                     const healerTimeAlive = healerTimePlayed - (14 * healerDeaths);
                     if (healerTimeAlive <= 0) continue;
 
@@ -2191,9 +1842,6 @@ window.onload = async function() {
                             HPM.innerText = (parseFloat(row.getElementsByTagName("td")[2].innerText) / (healerTimePlayed / 60)).toFixed(0)
                             row.insertBefore(HPM, row.getElementsByTagName("td")[3])
                         }
-
-                        //console.log("width");
-                        //console.log(heal_healtables[0].style);
                         healtable.style.width = "auto";
                     }
                 } 
@@ -2210,27 +1858,16 @@ window.onload = async function() {
                 let allLogsCached = true;
                 let logsDisplayed = []
                 for (let log of logsListed) {
-                    console.log(log.children[0].lastChild.href.substring(16))
                     if (!(window.localStorage.getItem(log.children[0].lastChild.href.substring(16)))) {
                         allLogsCached = false;
                         console.log("not all visible logs cached");
                     }
                     logsDisplayed.push(log.children[0].lastChild.href.substring(16));
                 };
-                console.log(logsDisplayed)
                 const firstLogTimestamp = parseInt(logsListed[0].childNodes[5].getAttribute("data-timestamp")) + 5;
-                //console.log(logsListed)
-                //console.log(logsListed[0].childNodes)
-                //console.log(logsListed[0].childNodes[7])
-                //console.log(firstLogTimestamp)
-                //console.log(new Date(firstLogTimestamp * 1000))
                 const lastLogTimestamp = parseInt(logsListed[logsListed.length - 1].childNodes[5].getAttribute("data-timestamp")) - 5;
-                //console.log(lastLogTimestamp)
-                //console.log(new Date(lastLogTimestamp * 1000))
 
                 const logsOnPage = allLogsCached ? logsDisplayed : ((await getLogMatchInfoBulk({startTime: lastLogTimestamp, endTime: firstLogTimestamp})).logs);
-
-                console.log(logsOnPage);
 
                 logsOnPage.forEach(async (log) => {
                     let logID = allLogsCached ? log : log.logid
@@ -2241,17 +1878,12 @@ window.onload = async function() {
                     }
                     if (cachedMatchInfo == null) return;
                     let league = allLogsCached ? (cachedMatchInfo.competitionHeaderText.substring(0, 2).toLowerCase() == "rgl" ? "rglgg" : "etf2l") : log.league;
-                    console.log(league)
 
                     if (logElement != null) {
                         if (!allLogsCached) await getOrSaveCachedLogInfo(logID, log);
                         if (league != null) {
-                            //console.log(log)
                             const formattedMatchInfo = allLogsCached ? cachedMatchInfo : await getOrSaveCachedLogInfo(logID, log);
-                            //console.log(formattedMatchInfo)
                             const matchLink = formattedMatchInfo.matchLink;
-                            //console.log(matchLink)
-                            //const matchLink = log.league === "etf2l" ? `https://etf2l.org/matches/${log.matchid}/` : log.league === "rglgg" ? `https://rgl.gg/Public/Match?m=${log.matchid}` : ``;
                             console.log("official found!")
                             const matchHyperlink = document.createElement("a");
                             matchHyperlink.href = matchLink;
@@ -2260,7 +1892,6 @@ window.onload = async function() {
                             const checkmark = document.createElement("img");
                             checkmark.id = "official-match-icon";
                             checkmark.src = currentBrowser.runtime.getURL("icons/official-match-icon.png");
-                            //console.log(browser.runtime.getURL("icons/official-match-icon.png"))
                             checkmark.width = 16;
                             checkmark.height = 16;
                             checkmark.style.filter = `hue-rotate(${OfficialCheckmarkColorShifts[log.league]})`;
@@ -2269,12 +1900,6 @@ window.onload = async function() {
                             checkmark.onmouseenter = function(){showOfficialPopover(formattedMatchInfo, checkmark)};
                             checkmark.onmouseleave = function(){deleteOfficialPopover()};
                             matchHyperlink.appendChild(checkmark);
-                            //matchHyperlink.innerHTML = `<img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);">`
-                            //const matchHyperlink2 = DOMParser.parse(`<a href="${matchLink}"><img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);"></a>`);
-                            //console.log(matchHyperlink2)
-                            //`<a href="${matchLink}">
-                            //        <img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="  }">
-                            //    </a>`
                             logElement.children[0].insertBefore(matchHyperlink, logElement.children[0].children[0]);
                         }
                     } else {
@@ -2298,20 +1923,8 @@ async function processRow(el, index, array) {
     const showDamageEfficiency = this[3];
     const showDamagePercent = this[4];
 
-	//console.log("start enhancer logging");
-    //console.log(team);
-    //console.log(DARed);
-    //console.log(DABlu);
-    //console.log(teamOrTotalDamage);
-    //console.log(DA.innerText);
-    //console.log(DAM.innerText);
-    //console.log(DT.innerText);
-    //console.log(DTM.innerText);
-	//console.log("end enhancer logging");
-
     if (showDamageEfficiency) {
         let DE = DT.cloneNode(true);
-        //DE.setAttribute("data-original-title", "Damage Efficiency");
         DE.innerText = (parseFloat(DA.innerText) / parseFloat(DT.innerText))
             .toFixed(2);
         el.insertBefore(DE, DTM);
@@ -2320,7 +1933,6 @@ async function processRow(el, index, array) {
     if (showDamagePercent) {
         let DAPercent = DT.cloneNode(true);
         let DATotal = teamOrTotalDamage ? parseFloat(DARed) + parseFloat(DABlu) : team === "RED" ? DARed : DABlu;
-        //console.log(DATotal);
         DAPercent.innerText = (((parseFloat(DA.innerText) / parseFloat(DATotal)) * 100)
             .toFixed(1)) + "%";
         el.insertBefore(DAPercent, DAM);
@@ -2360,14 +1972,12 @@ function getCSSRule(search, returnArray) {
 	let styleSheets = [].map.call(document.styleSheets[0], function(item) {
 	  return [].slice.call(returnStyleSheetRules(item));
 	});
-    console.log(document.styleSheets[0]);
 
 	let rule = null;
 	let rules = [];
 	styleSheets.forEach(function(thisSheet){
 	  let findTheRule = thisSheet.filter(function(rule) {
 	    if(rule.selectorText){
-            console.log(rule.selectorText);
 	    	return rule.selectorText.lastIndexOf(search)===0  && search.length===rule.selectorText.length;	
 	    }else return false;
 	  });
@@ -2412,8 +2022,6 @@ function findDictInArray(array, key, value) {
 
 const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader) => {
     const logInfoStorage = window.localStorage.getItem(logID);
-    //console.log(logInfoStorage)
-    //let matchInfo;
 
     let competitionHeaderText = '';
     let matchHeaderText = '';
@@ -2423,7 +2031,7 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
     if (!timestamp && suppliedMatchInfo) timestamp = new Date(suppliedMatchInfo.time * 1000);
 
     if (logInfoStorage) {
-        console.log("existing match info")
+        //console.log("existing match info")
 
         if (logInfoStorage != "none") {
             matchInfo = JSON.parse(logInfoStorage);
@@ -2432,16 +2040,15 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
             competitionLink = matchInfo.competitionLink;
             matchLink = matchInfo.matchLink;
         } else {
-            console.log("no comp match associated")
+            //console.log("no comp match associated")
             if (matchHeader) matchHeader.innerText = "No Match Found";
             return null;
         }
     } else {
-        console.log("new match info")
+        //console.log("new match info")
 
         let matchInfo;
         matchInfo = suppliedMatchInfo ? suppliedMatchInfo : await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
-        //console.log(matchInfo);
 
         if (matchInfo && matchInfo.league) {
             console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
@@ -2450,17 +2057,14 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
             const matchID = matchInfo.matchid;
             switch(league) {
                 case "etf2l":
-                    //matchHeader.innerText = "Loading..."
 
                     matchLink = `https://etf2l.org/matches/${matchID}/`;
 
                     const etf2lMatchInfo = await getETF2LMatchByID(matchID);
-                    //console.log(etf2lMatchInfo)
 
                     matchHeaderText = `${etf2lMatchInfo.division ? etf2lMatchInfo.division.name : ''}${etf2lMatchInfo.division ? ' - ' : ''}${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
 
                     const competitionID = etf2lMatchInfo.competition.id;
-                    //console.log(competitionID)
                     const competitionInfo = await getETF2LCompetitionByID(competitionID);
 
                     competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
@@ -2470,19 +2074,16 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
                     } else {
                         competitionLink = `https://etf2l.org/${competitionInfo.name.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
                     }
-                    //console.log(competitionLink);
                     break;
+
                 case "rgl":
-                    //matchHeader.innerText = "Loading..."
 
                     matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
-                    //console.log(matchLink)
 
                     const RGLMatchInfo = await getRGLMatchByID(matchID)
 
                     competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
                     competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
-                    //console.log(competitionLink)
 
                     matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
                     break;
@@ -2499,29 +2100,20 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
             }
 
             window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
-            //matchHeader.innerText = "";
         } else {
             console.log(`no match found for log ${logID}`);
             let timestampPlus30Minutes = new Date(timestamp.getTime());
             timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
-            //console.log(timestamp.getTime())
-            //console.log(timestampPlus30Minutes);
             if (timestampPlus30Minutes < Date.now()) {
                 window.localStorage.setItem(logID, "none");
-                console.log("marking log as not being associated with any competitive matches");
+                //console.log("marking log as not being associated with any competitive matches");
                 if (matchHeader) matchHeader.innerText = "No Match Found";
             } else {
-                //console.log(Date.now())
-                //console.log(timestamp.getTime())
-                //console.log(Date.now() - timestamp.getTime())
-                //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
-                //console.log(timestamp.getTime())
-                console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
+                //console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
                 if (matchHeader) matchHeader.innerText = "No Match Found, Check Again Later";
             }
             return null;
         }
     }
-    //console.log({competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink})
     return {competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink};
 }

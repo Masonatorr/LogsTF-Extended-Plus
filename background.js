@@ -15,7 +15,6 @@ const checkForErrors = (response) => {
         console.log("error with response")
         console.log(response.status)
         console.log(response)
-        //console.log(response.json())
         return true;
     }
 
@@ -65,8 +64,6 @@ const getRGLProfile = async (steamID) => {
 const getRGLProfilesBulk = async (steamIDList) => {
     const uri = `https://api.rgl.gg/v0/profile/getmany`;
 
-    //await timer(500);
-    //console.log(JSON.stringify(steamIDList))
     let response = await fetch(uri, {method: "POST",
                                     body: JSON.stringify(steamIDList),
                                     headers: {'accept': '*/*', 'Content-Type': 'application/json'}
@@ -129,46 +126,8 @@ const getETF2LPastTeams = async (steamID) => {
     return await response.json();
 };
 
-//const getETF2LMatchesInTimeframe = async (searchParameters) => {
-//    console.log("get match")
-//    const uriETF2L = new URL(`https://api-v2.etf2l.org/matches`);
-//    const playersJSON = JSON.stringify(searchParameters.players.slice(0, 2 - searchParameters.players.length))/*.replace(/","/, ",  ")*/.replace(/"/g, "");
-//    console.log(playersJSON)
-//    console.log(playersJSON.substring(1, playersJSON.length - 2))
-//
-//    const params = {
-//        "team_type": `${searchParameters.gamemode}`,
-//        "from": searchParameters.startTime,
-//        "to": searchParameters.endTime,
-//        "string[0]" : playersJSON.substring(1, playersJSON.length - 2),
-//    };
-//    Object.keys(params)
-//        .forEach(key => uriETF2L.searchParams.append(key, params[key]));
-//
-//    await timer(500);
-//    let response = await fetch(uriETF2L, {method: "POST",
-//                                    headers: {"Accept": "application/json", 'Content-Type': 'application/json'}
-//                                    });
-//    if (checkForErrors(response) === "ratelimit") {
-//        for (i = 0; i < 10; i++) {
-//            console.log(`retrying after ${3000 * (i + 1)}ms`);
-//            await timer(3000 * (i + 1));
-//            response = await fetch(uriETF2L, {method: "POST",
-//                                    headers: {"Accept": "application/json", 'Content-Type': 'application/json'}
-//                                    });
-//            if (!checkForErrors(response)) return await response.json();
-//        }
-//        return "ratelimited";
-//    } else if (checkForErrors(response)) {
-//        return;
-//    }
-//
-//    return await response.json();
-//};
-
 const getLogMatchInfo = async (logInfo) => {
-    //console.log("get match");
-    //const uriLog = `https://trends.tf/api/v1/logs?steamid64=${logInfo.players[0]}&steamid64=${logInfo.players[logInfo.players.length - 1]}&time_from=${logInfo.startTime}&time_to=${logInfo.endTime}`;
+    //const uriTrends = new URL(`https://trends.tf/api/v1/log/${logID}`);
     const uriTrends = new URL(`https://trends.tf/api/v1/logs`);
 
     const params = {
@@ -180,16 +139,10 @@ const getLogMatchInfo = async (logInfo) => {
     Object.keys(params)
         .forEach(key => uriTrends.searchParams.append(key, params[key]));
 
-    //const headers = new Headers();
-    //headers.append("Accept", "*/*");
-    //headers.append("Sec-CH-UA", "Google Chrome";v="90")
-
     await timer(75);
     let response = await fetch(uriTrends, {
                                             method: 'GET',
                                           });
-    //console.log(checkForErrors(response))
-    //console.log(checkForErrors(response) === "ratelimit")
     const error = checkForErrors(response);
     if (error === "ratelimit") {
         for (i = 0; i < 10; i++) {
@@ -209,9 +162,7 @@ const getLogMatchInfo = async (logInfo) => {
 };
 
 const getLogMatchInfoBulk = async (searchInfo) => {
-    //console.log("get match");
     const uriTrends = new URL("https://trends.tf/api/v1/logs");
-    //const uriLog = `https://trends.tf/api/v1/logs?steamid64=${logInfo.players[0]}&steamid64=${logInfo.players[logInfo.players.length - 1]}&time_from=${logInfo.startTime}&time_to=${logInfo.endTime}`;
 
     const params = {
         "time_from": searchInfo.startTime,
@@ -222,16 +173,10 @@ const getLogMatchInfoBulk = async (searchInfo) => {
     Object.keys(params)
         .forEach(key => uriTrends.searchParams.append(key, params[key]));
 
-    //const headers = new Headers();
-    //headers.append("Accept", "*/*");
-    //headers.append("Sec-CH-UA", "Google Chrome";v="90")
-
     await timer(75);
     let response = await fetch(uriTrends, {
                                             method: 'GET',
                                           });
-    //console.log(checkForErrors(response))
-    //console.log(checkForErrors(response) === "ratelimit")
     const error = checkForErrors(response);
     if (error === "ratelimit") {
         for (i = 0; i < 10; i++) {

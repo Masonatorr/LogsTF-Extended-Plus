@@ -161,8 +161,6 @@ async function setTheme(newValue, document) {
     damagePercentTotalOrTeamRightVal.style.color = damagePercentFlag.damagePercentTotalOrTeam ? enabledColor : disabledColor;
 
     const dropdownText = document.getElementsByClassName("dropdown-text");
-    //dropdownText[0].parentNode.style.backgroundColor = newValue ? "black" : "white";
-    //dropdownText[1].parentNode.style.backgroundColor = newValue ? "black" : "white";
 }
 
 async function setLeagueDropdown(newValue, document) {
@@ -174,7 +172,6 @@ async function setLeagueDropdown(newValue, document) {
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
 
     const themeVal = await currentBrowser.storage.local.get("theme");
-    //dropdownText.parentNode.style.backgroundColor = themeVal.theme ? "black" : "white";
 
     const dropdownDiv = document.getElementsByClassName("league-dropdown-div")[0];
 
@@ -190,7 +187,6 @@ async function setStatsDropdown(newValue, document) {
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
 
     const themeVal = await currentBrowser.storage.local.get("theme");
-    //dropdownText.parentNode.style.backgroundColor = themeVal.theme ? "black" : "white";
 
     const dropdownDiv = document.getElementsByClassName("stats-dropdown-div")[0];
 
@@ -206,7 +202,6 @@ async function setProfileDropdown(newValue, document) {
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
 
     const themeVal = await currentBrowser.storage.local.get("theme");
-    //dropdownText.parentNode.style.backgroundColor = themeVal.theme ? "black" : "white";
 
     const dropdownDiv = document.getElementsByClassName("profile-dropdown-div")[0];
 
@@ -407,23 +402,11 @@ async function populateShowOfficialMatches(showOfficialMatchesInput) {
     showOfficialMatchesInput.checked = value;
 }
 
-/*window.onload = function() {
-    console.log("onload" + Date())
-
-    const leagueDropdownInput = document.getElementById("league-dropdown");
-    const statsDropdownInput = document.getElementById("stats-dropdown");
-
-    populateLeagueDropdownToggle(leagueDropdownInput, document);
-    populateStatsDropdownToggle(statsDropdownInput, document);
-}*/
-
 document.addEventListener("DOMContentLoaded", async () => {
-    //const etf2lInput = document.getElementById("etf2l-input");
     const matchInfoInput = document.getElementById("match-info-input");
     const etf2lNameInput = document.getElementById("etf2l-name-input");
     const etf2lTeamInput = document.getElementById("etf2l-team-input");
     const etf2lDivisionInput = document.getElementById("etf2l-division-input");
-    //const rglInput = document.getElementById("rgl-input");
     const rglNameInput = document.getElementById("rgl-name-input");
     const rglTeamInput = document.getElementById("rgl-team-input");
     const rglDivisionInput = document.getElementById("rgl-division-input");
@@ -449,12 +432,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     populateThemeToggle(themeInput, document);
 
-   // populateETF2LCheckbox(etf2lInput);
     populateMatchInfoCheckbox(matchInfoInput);
     populateETF2LNameCheckbox(etf2lNameInput);
     populateETF2LTeamCheckbox(etf2lTeamInput);
     populateETF2LDivisionCheckbox(etf2lDivisionInput);
-    //populateRGLCheckbox(rglInput);
     populateRGLNameCheckbox(rglNameInput);
     populateRGLTeamCheckbox(rglTeamInput);
     populateRGLDivisionCheckbox(rglDivisionInput);
@@ -474,12 +455,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateStatsDropdownToggle(statsDropdownInput, document);
     populateProfileDropdownToggle(profileDropdownInput, document);
 
-    //etf2lInput.addEventListener("change", (e) => setETF2LValue(e.target.checked));
     matchInfoInput.addEventListener("change", (e) => setMatchInfoValue(e.target.checked));
     etf2lNameInput.addEventListener("change", (e) => setETF2LNameValue(e.target.checked));
     etf2lTeamInput.addEventListener("change", (e) => setETF2LTeamValue(e.target.checked));
     etf2lDivisionInput.addEventListener("change", (e) => setETF2LDivisionValue(e.target.checked));
-    //rglInput.addEventListener("change", (e) => setRGLValue(e.target.checked));
     rglNameInput.addEventListener("change", (e) => setRGLNameValue(e.target.checked));
     rglTeamInput.addEventListener("change", (e) => setRGLTeamValue(e.target.checked));
     rglDivisionInput.addEventListener("change", (e) => setRGLDivisionValue(e.target.checked));

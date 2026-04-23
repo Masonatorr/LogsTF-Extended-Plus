@@ -21,10 +21,6 @@
         <div>
             <div class="section-title-container">
                 <label class="section-title">―――――League Display Settings―――――</label>
-                <!--<label class="dropdown">
-                    <input id="league-dropdown" type="checkbox">
-                    <img class="dropdown-arrow" src="icons/dropdown-arrow.png" width="16" height="10">
-                </label>-->
             </div>
             <div>
                 <label class="dropdown">
@@ -34,44 +30,30 @@
             </div>
             <div class="league-dropdown-div collapsible">
                 <div class="org-buttons">
-                    <!--<div class="org-container">
-                        <label>
-                            Show ETF2L Info
-                        </label>
-                        <input id="etf2l-input" class="org-button" type="checkbox">
-                    </div>
-                    <span class="etf2l-dropdown-div collapsible" style="display: block;">-->
-                        <div class="org-container">
-                            <label>
-                                Show Official Match Info
-                            </label>
-                            <input id="match-info-input" class="org-button" type="checkbox">
-                        </div>
-                        <div class="org-container">
-                            <label>
-                                Show ETF2L Username
-                            </label>
-                            <input id="etf2l-name-input" class="org-button" type="checkbox">
-                        </div>
-                        <div class="org-container">
-                            <label>
-                                Show ETF2L Division
-                            </label>
-                            <input id="etf2l-division-input" class="org-button" type="checkbox">
-                        </div>
-                        <div class="org-container">
-                            <label>
-                                Show ETF2L Team
-                            </label>
-                            <input id="etf2l-team-input" class="org-button" type="checkbox">
-                        </div>
-                    <!--</span>
                     <div class="org-container">
                         <label>
-                            Show RGL Info
+                            Show Official Match Info
                         </label>
-                        <input id="rgl-input" class="org-button" type="checkbox">
-                    </div>-->
+                        <input id="match-info-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show ETF2L Username
+                        </label>
+                        <input id="etf2l-name-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show ETF2L Division
+                        </label>
+                        <input id="etf2l-division-input" class="org-button" type="checkbox">
+                    </div>
+                    <div class="org-container">
+                        <label>
+                            Show ETF2L Team
+                        </label>
+                        <input id="etf2l-team-input" class="org-button" type="checkbox">
+                    </div>
                     <div class="org-container">
                         <label>
                             Show RGL Username
@@ -190,23 +172,6 @@
             </div>
         </div>
     </main>
-
-    <!--<script>
-    const collapsibles = document.getElementsByClassName("collapsible");
-    let i;
-
-    for (i = 0; i < collapsibles.length; i++) {
-    collapsibles[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        const content = this.parentNode.parentNode.nextElementSibling;
-        if (content.style.maxHeight){
-        content.style.maxHeight = null;
-        } else {
-        content.style.maxHeight = `${content.scrollHeight}px`;
-        } 
-    });
-    }
-    </script>-->
 </body>
 
 </html>

@@ -66,25 +66,6 @@ body {
     transition: max-height 0.2s ease-out;
 }
 
-/*.dropdown-arrow:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    right: 4px;
-
-
-    -webkit-transition: .4s;
-    transition: .4s;
-}
-
-input:checked+.dropdown-arrow:before {
-    -webkit-transform: rotate(180deg);
-    -ms-transform: rotate(180deg);
-    transform: rotate(180deg);
-}*/
-
 /* Grid containing theme switch and icons */
 .theme-container {
     position: absolute;
@@ -103,7 +84,6 @@ input:checked+.dropdown-arrow:before {
     width: 30px;
     height: 17px;
     margin: 0px 5px 0px 5px;
-    /*transform: scale(0.5);*/
 }
 
 /* Hide default HTML checkbox */
@@ -150,7 +130,6 @@ input:checked+.theme-slider:before {
 }
 
 .org-buttons {
-    /*min-width: 250px;*/
     width: 250px;
     max-width: 250px;
 }
@@ -240,14 +219,6 @@ input:checked+.theme-slider:before {
     -webkit-transition: .4s;
     transition: .4s;
 }
-
-/*input:checked+.slider {
-    background-color: #2196F3;
-}
-
-input:focus+.slider {
-    box-shadow: 0 0 1px #2196F3;
-}*/
 
 input:checked+.slider:before {
     -webkit-transform: translateX(26px);
