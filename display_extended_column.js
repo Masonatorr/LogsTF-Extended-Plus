@@ -834,7 +834,7 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
 
     rglLink.classList.add("tip")
     //console.log(Date.parse(banWarning.endsAt))
-    rglLink.setAttribute("data-original-title", `Banned from RGL until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason/*.replace(/\s/g, ' ')*/}`)
+    rglLink.setAttribute("data-original-title", `Banned from RGL until ${new Date(Date.parse(banWarning.endsAt)).toLocaleDateString()} for: ${banWarning.reason.replace(/(<.?br.?>)/g, ' ')}`)
 }
 
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
