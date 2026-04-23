@@ -1328,19 +1328,24 @@ const steamID64Base = "76561197960265728";
 const steamID64BasePrefix = "7656"
 const steamID64BaseShortened = 1197960265728;
 
+const keysToRemove = [
+                        "version",
+                        "classkills",
+                        "classdeaths",
+                        "classkillassists",
+                        "chat",
+                        "killstreaks",
+                        "success"
+                    ]
+
 const processLogInfo = async (logID) => {
     const logInfo = await getLogInfo(logID);
     //console.log(logInfo);
     if (logInfo === "ratelimited") return "ratelimited";
     //console.log(steamID3);
-    delete logInfo.version;
+    for (key of keysToRemove) delete logInfo[key];
+
     logInfo.rounds = Object.keys(logInfo.rounds).length;
-    delete logInfo.classkills;
-    delete logInfo.classdeaths;
-    delete logInfo.classkillassists;
-    delete logInfo.chat;
-    delete logInfo.killstreaks;
-    delete logInfo.success
     //delete logInfo.info;
     //console.log(logInfo);
     return logInfo;
