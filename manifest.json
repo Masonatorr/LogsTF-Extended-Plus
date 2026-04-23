@@ -53,5 +53,11 @@
                 "required": ["none"]
             }
         }
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": ["icons/official-match-icon.png"],
+            "matches": ["<all_urls>"]
+        }
+    ]
 }

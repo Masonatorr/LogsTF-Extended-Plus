@@ -187,7 +187,6 @@ const getLogMatchInfo = async (logInfo) => {
     await timer(75);
     let response = await fetch(uriTrends, {
                                             method: 'GET',
-                                            headers: {"Accept": "*/*", "Sec-CH-UA": '"Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"'},
                                           });
     //console.log(checkForErrors(response))
     //console.log(checkForErrors(response) === "ratelimit")
@@ -198,7 +197,48 @@ const getLogMatchInfo = async (logInfo) => {
             await timer(2000 * (i + 1));
             response = await fetch(uriTrends, {
                                             method: 'GET',
-                                            headers: {"Accept": "*/*"},
+                                          });
+            if (!checkForErrors(response)) return await response.json();
+        }
+        return "ratelimited";
+    } else if (error) {
+        return;
+    }
+
+    return response.json();
+};
+
+const getLogMatchInfoBulk = async (searchInfo) => {
+    //console.log("get match");
+    const uriTrends = new URL("https://trends.tf/api/v1/logs");
+    //const uriLog = `https://trends.tf/api/v1/logs?steamid64=${logInfo.players[0]}&steamid64=${logInfo.players[logInfo.players.length - 1]}&time_from=${logInfo.startTime}&time_to=${logInfo.endTime}`;
+
+    const params = {
+        "time_from": searchInfo.startTime,
+        "time_to": searchInfo.endTime,
+        "limit": "27"
+    }
+    if (searchInfo.steamID64) params["steamid64"] = searchInfo.steamID64;
+    Object.keys(params)
+        .forEach(key => uriTrends.searchParams.append(key, params[key]));
+
+    //const headers = new Headers();
+    //headers.append("Accept", "*/*");
+    //headers.append("Sec-CH-UA", "Google Chrome";v="90")
+
+    await timer(75);
+    let response = await fetch(uriTrends, {
+                                            method: 'GET',
+                                          });
+    //console.log(checkForErrors(response))
+    //console.log(checkForErrors(response) === "ratelimit")
+    const error = checkForErrors(response);
+    if (error === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriTrends, {
+                                            method: 'GET',
                                           });
             if (!checkForErrors(response)) return await response.json();
         }
@@ -334,6 +374,12 @@ const getAllData = async (inputData, messageType) => {
 		console.log("Match Info For Log")
 		console.log(data)
     }
+	else if (messageType === "log_match_info_bulk")
+	{
+    	data = await getLogMatchInfoBulk(inputData);
+		console.log("Bulk Match Info For Log")
+		console.log(data)
+    }
 	else if (messageType === "etf2l_match_by_id")
 	{
     	data = await getETF2LMatchByID(inputData);
@@ -417,6 +463,9 @@ currentBrowser.runtime.onInstalled.addListener(async () => {
     });
     await currentBrowser.storage.local.set({
         showClassesPlayed: true
+    });
+    await currentBrowser.storage.local.set({
+        showOfficialMatches: true
     });
 
     //theme

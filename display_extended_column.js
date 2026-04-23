@@ -452,6 +452,11 @@ const WeaponLookupTable = Object.freeze({
         telefrag: "Telefrag",
 });
 
+//Couldn't figure out how to just set the color of the official match icon, so I hue shift it from RGL's orange checkmark
+const OfficialCheckmarkColorShifts = Object.freeze({
+    rglgg: "0deg",
+    etf2l: "180deg"
+})
 const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     if (pastTeams === undefined || pastTeams === null || pastTeams.length == 0) return RGLDivisions.None;
 
@@ -1413,6 +1418,65 @@ const updateLogRows = async (steamID) => {
     const combinerButtonsShifted = (await getShowMatchScoresFlag() && combinerButtons.length > 0)
 
     await combinerOffsetCompleted;
+
+    if (await getShowOfficialMatchesFlag()) {
+        const firstLogTimestamp = parseInt(logsListed[0].childNodes[7].getAttribute("data-timestamp")) + 5;
+        //console.log(logsListed)
+        //console.log(logsListed[0].childNodes)
+        //console.log(logsListed[0].childNodes[7])
+        //console.log(firstLogTimestamp)
+        //console.log(new Date(firstLogTimestamp * 1000))
+        const lastLogTimestamp = parseInt(logsListed[logsListed.length - 1].childNodes[7].getAttribute("data-timestamp")) - 5;
+        //console.log(lastLogTimestamp)
+        //console.log(new Date(lastLogTimestamp * 1000))
+
+        const logsOnPage = (await getLogMatchInfoBulk({steamID64: steamID, startTime: lastLogTimestamp, endTime: firstLogTimestamp})).logs
+
+        console.log(logsOnPage);
+
+        logsOnPage.forEach(async (log) => {
+            let logID = log.logid
+            let logElement = document.getElementById(`log_${logID}`)
+
+            if (logElement != null) {
+                if (log.league != null) {
+                    //console.log(log)
+                    const formattedMatchInfo = await getOrSaveCachedLogInfo(logID, log);
+                    //console.log(formattedMatchInfo)
+                    const matchLink = formattedMatchInfo.matchLink;
+                    //console.log(matchLink)
+                    //const matchLink = log.league === "etf2l" ? `https://etf2l.org/matches/${log.matchid}/` : log.league === "rglgg" ? `https://rgl.gg/Public/Match?m=${log.matchid}` : ``;
+                    console.log("official found!")
+                    const matchHyperlink = document.createElement("a");
+                    matchHyperlink.href = matchLink;
+                    matchHyperlink.alignItems = "center"
+                    matchHyperlink.style.marginRight = "3px";
+                    const checkmark = document.createElement("img");
+                    checkmark.id = "official-match-icon";
+                    checkmark.src = currentBrowser.runtime.getURL("icons/official-match-icon.png");
+                    //console.log(browser.runtime.getURL("icons/official-match-icon.png"))
+                    checkmark.width = 16;
+                    checkmark.height = 16;
+                    checkmark.style.filter = `hue-rotate(${OfficialCheckmarkColorShifts[log.league]})`;
+                    checkmark.setAttribute("data-original-title", formattedMatchInfo.matchHeaderText);
+                    checkmark.classList.add("tip")
+                    checkmark.onmouseenter = function(){showOfficialPopover(formattedMatchInfo, checkmark)};
+                    checkmark.onmouseleave = function(){deleteOfficialPopover()};
+                    matchHyperlink.appendChild(checkmark);
+                    //matchHyperlink.innerHTML = `<img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);">`
+                    //const matchHyperlink2 = DOMParser.parse(`<a href="${matchLink}"><img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);"></a>`);
+                    //console.log(matchHyperlink2)
+                    //`<a href="${matchLink}">
+                    //        <img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="  }">
+                    //    </a>`
+                    logElement.children[1].insertBefore(matchHyperlink, logElement.children[1].children[0]);
+                }
+            } else {
+                return;
+            }
+        });
+    }
+
     for (let i = 0; i < numLogs; i++) {
         const curLog = logsListed[i];
         const curLogLink = curLog.children[1].lastChild.href;
@@ -1631,10 +1695,10 @@ const showMatchInfo = async (playerRows) => {
 
     const logID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
 
-    let competitionHeaderText = '';
-    let matchHeaderText = '';
-    let competitionLink = '';
-    let matchLink = '';
+    //let competitionHeaderText = '';
+    //let matchHeaderText = '';
+    //let competitionLink = '';
+    //let matchLink = '';
 
     const logDateHeader = document.getElementById("log-date");
 
@@ -1650,116 +1714,117 @@ const showMatchInfo = async (playerRows) => {
     matchHeader.appendChild(matchHeaderHyperlink);
     competitionHeader.after(matchHeader);
 
-    const logInfoStorage = window.localStorage.getItem(logID);
-    //console.log(logInfoStorage)
-    let logInfo;
+    //const logInfoStorage = window.localStorage.getItem(logID);
+    const logInfo = await getOrSaveCachedLogInfo(logID, null, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader);
+    console.log(logInfo)
+    if (logInfo == null) return;
 
-    if (logInfoStorage) {
-        console.log("existing match info")
-
-        if (logInfoStorage != "none") {
-            logInfo = JSON.parse(logInfoStorage);
-            competitionHeaderText = logInfo.competitionHeaderText;
-            matchHeaderText = logInfo.matchHeaderText;
-            competitionLink = logInfo.competitionLink;
-            matchLink = logInfo.matchLink;
-        } else {
-            console.log("no comp match associated")
-            matchHeader.innerText = "No Match Found";
-        }
-    } else {
-        console.log("new match info")
-
-        const matchInfo = await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
-        //console.log(matchInfo);
-
-        if (matchInfo.league) {
-            console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
-
-            const league = matchInfo.league;
-            const matchID = matchInfo.matchid;
-            switch(league) {
-                case "etf2l":
-                    //matchHeader.innerText = "Loading..."
-
-                    matchLink = `https://etf2l.org/matches/${matchID}/`;
-
-                    const etf2lMatchInfo = await getETF2LMatchByID(matchID);
-                    //console.log(etf2lMatchInfo)
-
-                    matchHeaderText = `${etf2lMatchInfo.division.name} - ${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
-
-                    const competitionID = etf2lMatchInfo.competition.id;
-                    //console.log(competitionID)
-                    const competitionInfo = await getETF2LCompetitionByID(competitionID);
-
-                    competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
-
-                    if (competitionInfo.archived) {
-                        competitionLink = `https://etf2l.org/etf2l/archives/${competitionID}/1/`;
-                    } else {
-                        competitionLink = `https://etf2l.org/${competitionHeader.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
-                    }
-                    //console.log(competitionLink);
-                    break;
-                case "rgl":
-                    //matchHeader.innerText = "Loading..."
-
-                    matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
-                    //console.log(matchLink)
-
-                    const RGLMatchInfo = await getRGLMatchByID(matchID)
-
-                    competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
-                    competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
-                    //console.log(competitionLink)
-
-                    matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
-                    break;
-                default:
-                    console.log(`unknown league ${league}! report this to me (masonator) so I can add support`)
-                    return;
-            }
-
-            const matchInfoToSave = {
-                competitionHeaderText: competitionHeaderText,
-                matchHeaderText: matchHeaderText,
-                competitionLink: competitionLink,
-                matchLink: matchLink
-            }
-
-            window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
-            //matchHeader.innerText = "";
-        } else {
-            console.log(`no match found for log ${logID}`);
-            let timestampPlus30Minutes = new Date(timestamp.getTime());
-            timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
-            //console.log(timestamp.getTime())
-            //console.log(timestampPlus30Minutes);
-            if (timestampPlus30Minutes < Date.now()) {
-                window.localStorage.setItem(logID, "none");
-                console.log("marking log as not being associated with any competitive matches");
-                matchHeader.innerText = "No Match Found";
-            } else {
-                //console.log(Date.now())
-                //console.log(timestamp.getTime())
-                //console.log(Date.now() - timestamp.getTime())
-                //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
-                //console.log(timestamp.getTime())
-                console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
-                matchHeader.innerText = "No Match Found, Check Again Later";
-            }
-        }
-    }
+    //if (logInfoStorage) {
+    //    console.log("existing match info")
+//
+    //    if (logInfoStorage != "none") {
+    //        logInfo = JSON.parse(logInfoStorage);
+    //        competitionHeaderText = logInfo.competitionHeaderText;
+    //        matchHeaderText = logInfo.matchHeaderText;
+    //        competitionLink = logInfo.competitionLink;
+    //        matchLink = logInfo.matchLink;
+    //    } else {
+    //        console.log("no comp match associated")
+    //        matchHeader.innerText = "No Match Found";
+    //    }
+    //} else {
+    //    console.log("new match info")
+//
+    //    const matchInfo = await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
+    //    //console.log(matchInfo);
+//
+    //    if (matchInfo.league) {
+    //        console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
+//
+    //        const league = matchInfo.league;
+    //        const matchID = matchInfo.matchid;
+    //        switch(league) {
+    //            case "etf2l":
+    //                //matchHeader.innerText = "Loading..."
+//
+    //                matchLink = `https://etf2l.org/matches/${matchID}/`;
+//
+    //                const etf2lMatchInfo = await getETF2LMatchByID(matchID);
+    //                //console.log(etf2lMatchInfo)
+//
+    //                matchHeaderText = `${etf2lMatchInfo.division.name} - ${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
+//
+    //                const competitionID = etf2lMatchInfo.competition.id;
+    //                //console.log(competitionID)
+    //                const competitionInfo = await getETF2LCompetitionByID(competitionID);
+//
+    //                competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
+//
+    //                if (competitionInfo.archived) {
+    //                    competitionLink = `https://etf2l.org/etf2l/archives/${competitionID}/1/`;
+    //                } else {
+    //                    competitionLink = `https://etf2l.org/${competitionHeader.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
+    //                }
+    //                //console.log(competitionLink);
+    //                break;
+    //            case "rgl":
+    //                //matchHeader.innerText = "Loading..."
+//
+    //                matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
+    //                //console.log(matchLink)
+//
+    //                const RGLMatchInfo = await getRGLMatchByID(matchID)
+//
+    //                competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
+    //                competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
+    //                //console.log(competitionLink)
+//
+    //                matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
+    //                break;
+    //            default:
+    //                console.log(`unknown league ${league}! report this to me (masonator) so I can add support`)
+    //                return;
+    //        }
+//
+    //        const matchInfoToSave = {
+    //            competitionHeaderText: competitionHeaderText,
+    //            matchHeaderText: matchHeaderText,
+    //            competitionLink: competitionLink,
+    //            matchLink: matchLink
+    //        }
+//
+    //        window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
+    //        //matchHeader.innerText = "";
+    //    } else {
+    //        console.log(`no match found for log ${logID}`);
+    //        let timestampPlus30Minutes = new Date(timestamp.getTime());
+    //        timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
+    //        //console.log(timestamp.getTime())
+    //        //console.log(timestampPlus30Minutes);
+    //        if (timestampPlus30Minutes < Date.now()) {
+    //            window.localStorage.setItem(logID, "none");
+    //            console.log("marking log as not being associated with any competitive matches");
+    //            matchHeader.innerText = "No Match Found";
+    //        } else {
+    //            //console.log(Date.now())
+    //            //console.log(timestamp.getTime())
+    //            //console.log(Date.now() - timestamp.getTime())
+    //            //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
+    //            //console.log(timestamp.getTime())
+    //            console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
+    //            matchHeader.innerText = "No Match Found, Check Again Later";
+    //        }
+    //    }
+    //}
 
     //const rightHeader = document.getElementsByClassName("log-header-right")[0];
     //const uploadedByHeader = document.getElementById("log-uploader");
 
-    competitionHeaderHyperlink.href = competitionLink;
-    competitionHeaderHyperlink.innerText = competitionHeaderText;
+    competitionHeaderHyperlink.href = logInfo.competitionLink;
+    competitionHeaderHyperlink.innerText = logInfo.competitionHeaderText;
     
-    matchHeaderHyperlink.href = matchLink;
-    matchHeaderHyperlink.innerText = matchHeaderText;
+    matchHeaderHyperlink.href = logInfo.matchLink;
+    matchHeaderHyperlink.innerText = logInfo.matchHeaderText;
 }
 
 const showIconPopover = (logInfo, classIcon, title) => {
@@ -1812,11 +1877,53 @@ const deleteIconPopover = () => {
     document.getElementsByClassName("popover top in")[0].remove();
 }
 
+const showOfficialPopover = (matchInfo, checkmark) => {
+    officialPopover = document.createElement("div");
+    officialPopover.classList.add("popover", "top", "in");
+    officialPopover.style.display = "block";
+    officialPopover.style.padding = "6px";
+
+    officialPopoverArrow = document.createElement("div");
+    officialPopoverArrow.classList.add("arrow");
+    officialPopover.appendChild(officialPopoverArrow);
+
+    //officialPopoverTitle = document.createElement("h3");
+    //officialPopoverTitle.classList.add("popover-title");
+    //officialPopoverTitle.innerText = matchInfo.competitionHeaderText;
+    //officialPopover.appendChild(officialPopoverTitle);
+
+    officialPopoverContent = document.createElement("div");
+    officialPopoverContent.classList.add("popover-content");
+    officialPopoverContent.innerText = `${matchInfo.competitionHeaderText.replace(/\s/g, ' ')}
+                                        ${matchInfo.matchHeaderText.replace(/\s/g, ' ')}`;
+    officialPopoverContent.style.textAlign = "center";
+    officialPopoverContent.style.lineHeight = "1.8";
+    officialPopover.appendChild(officialPopoverContent);
+    
+    checkmarkPos = checkmark.getBoundingClientRect();
+
+    checkmark.after(officialPopover);
+    
+    const zoom = window.devicePixelRatio;
+    
+    const extraOffsetWidth = Math.max(0, -0.495 * (document.getElementsByClassName("container main")[0].offsetWidth - document.getElementsByTagName("body")[0].offsetWidth));
+    officialPopover.style.top = `${((checkmarkPos.top + window.scrollY)) - officialPopover.offsetHeight - 75}px`;
+    officialPopover.style.left = `${((checkmarkPos.left + window.scrollX) - extraOffsetWidth) - (officialPopover.offsetWidth * 0.51) + (8 * zoom)}px`;
+    
+    officialPopover.position = "absolute"
+    
+    console.log("popover shown");
+}
+
+const deleteOfficialPopover = () => {
+    document.getElementsByClassName("popover top in")[0].remove();
+}
+
 
 const pageURL = document.URL
 console.log(pageURL);
 //window.localStorage.clear();
-if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
+if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
     if (pageURL.includes("profile")) {
         //console.log(pageURL);
         console.log("Parsing player profile stats and info!")
@@ -1831,7 +1938,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         //mainElement.style.width = "auto !important"
 
         updateLogRows(steamID);
-    } else if (pageURL.length > 16) {
+    } else if (pageURL.length > 16 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) {
         //console.log(pageURL);
         console.log("Parsing single log stats and info!")
 
@@ -1883,7 +1990,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
             showMatchInfo(playerRows);
         }
-    } else {
+    } else if (!(pageURL.length <= 16 || pageURL.includes("tf/?p=") || pageURL.includes("tf/popular"))) {
         console.log("Nothing to do on this page")
     }
 } else {
@@ -1896,7 +2003,7 @@ const combinerOffsetCompleted = new Promise(res => {markCombinerOffsetComplete =
 window.onload = async function() {
     //console.log("onload")
     const pageURL = document.URL
-    if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("uploads"))) {
+    if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
         console.log("valid page")
         if (pageURL.includes("profile")) {
             const combinerButtons = document.getElementsByClassName("log_add_button");
@@ -1921,7 +2028,7 @@ window.onload = async function() {
                 console.log("no log combiner buttons to offset");
                 markCombinerOffsetComplete();
             }
-        } else if (pageURL.length > 17) {
+        } else if (pageURL.length > 17 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) {
             console.log("onload singlelog")
 
             if (isFirefox) {
@@ -2124,6 +2231,90 @@ window.onload = async function() {
                     healerHealsDisplay.innerHTML += `<br><span class="tip" data-original-title="Heals Per Minute Alive (Estimates 14s respawn time per death)">(${healerHealsPerMinuteAlive.toFixed(0)}/m alive)</span>`
                 } 
             }
+        } else if (pageURL.length <= 16 || pageURL.includes("tf/?p=") || pageURL.includes("tf/popular")) {
+            if (await getShowOfficialMatchesFlag()) {
+                const logTable = document.getElementsByClassName("loglist")[0];
+
+                const logTableHeader = logTable.children[0].firstElementChild;
+                const logTableBody = logTable.children[1];
+
+                const logsListed = logTableBody.getElementsByTagName("tr");
+
+                let allLogsCached = true;
+                let logsDisplayed = []
+                for (let log of logsListed) {
+                    console.log(log.children[0].lastChild.href.substring(16))
+                    if (!(window.localStorage.getItem(log.children[0].lastChild.href.substring(16)))) {
+                        allLogsCached = false;
+                        console.log("not all visible logs cached");
+                    }
+                    logsDisplayed.push(log.children[0].lastChild.href.substring(16));
+                };
+                console.log(logsDisplayed)
+                const firstLogTimestamp = parseInt(logsListed[0].childNodes[5].getAttribute("data-timestamp")) + 5;
+                //console.log(logsListed)
+                //console.log(logsListed[0].childNodes)
+                //console.log(logsListed[0].childNodes[7])
+                //console.log(firstLogTimestamp)
+                //console.log(new Date(firstLogTimestamp * 1000))
+                const lastLogTimestamp = parseInt(logsListed[logsListed.length - 1].childNodes[5].getAttribute("data-timestamp")) - 5;
+                //console.log(lastLogTimestamp)
+                //console.log(new Date(lastLogTimestamp * 1000))
+
+                const logsOnPage = allLogsCached ? logsDisplayed : ((await getLogMatchInfoBulk({startTime: lastLogTimestamp, endTime: firstLogTimestamp})).logs);
+
+                console.log(logsOnPage);
+
+                logsOnPage.forEach(async (log) => {
+                    let logID = allLogsCached ? log : log.logid
+                    let logElement = document.getElementById(`log_${logID}`)
+                    let cachedMatchInfo = ''
+                    if (allLogsCached) {
+                        cachedMatchInfo = await getOrSaveCachedLogInfo(logID);
+                    }
+                    if (cachedMatchInfo == null) return;
+                    let league = allLogsCached ? (cachedMatchInfo.competitionHeaderText.substring(0, 2).toLowerCase() == "rgl" ? "rglgg" : "etf2l") : log.league;
+                    console.log(league)
+
+                    if (logElement != null) {
+                        if (!allLogsCached) await getOrSaveCachedLogInfo(logID, log);
+                        if (league != null) {
+                            //console.log(log)
+                            const formattedMatchInfo = allLogsCached ? cachedMatchInfo : await getOrSaveCachedLogInfo(logID, log);
+                            //console.log(formattedMatchInfo)
+                            const matchLink = formattedMatchInfo.matchLink;
+                            //console.log(matchLink)
+                            //const matchLink = log.league === "etf2l" ? `https://etf2l.org/matches/${log.matchid}/` : log.league === "rglgg" ? `https://rgl.gg/Public/Match?m=${log.matchid}` : ``;
+                            console.log("official found!")
+                            const matchHyperlink = document.createElement("a");
+                            matchHyperlink.href = matchLink;
+                            matchHyperlink.alignItems = "center"
+                            matchHyperlink.style.marginRight = "3px";
+                            const checkmark = document.createElement("img");
+                            checkmark.id = "official-match-icon";
+                            checkmark.src = currentBrowser.runtime.getURL("icons/official-match-icon.png");
+                            //console.log(browser.runtime.getURL("icons/official-match-icon.png"))
+                            checkmark.width = 16;
+                            checkmark.height = 16;
+                            checkmark.style.filter = `hue-rotate(${OfficialCheckmarkColorShifts[log.league]})`;
+                            checkmark.setAttribute("data-original-title", formattedMatchInfo.matchHeaderText);
+                            checkmark.classList.add("tip")
+                            checkmark.onmouseenter = function(){showOfficialPopover(formattedMatchInfo, checkmark)};
+                            checkmark.onmouseleave = function(){deleteOfficialPopover()};
+                            matchHyperlink.appendChild(checkmark);
+                            //matchHyperlink.innerHTML = `<img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);">`
+                            //const matchHyperlink2 = DOMParser.parse(`<a href="${matchLink}"><img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="filter: hue-rotate(90deg);"></a>`);
+                            //console.log(matchHyperlink2)
+                            //`<a href="${matchLink}">
+                            //        <img id="official-match-icon" src="icons/official-match-icon.png" width="18" height="18" style="  }">
+                            //    </a>`
+                            logElement.children[0].insertBefore(matchHyperlink, logElement.children[0].children[0]);
+                        }
+                    } else {
+                        return;
+                    }
+                });
+            }
         }
     }
 }
@@ -2250,4 +2441,120 @@ function findDictInArray(array, key, value) {
     }
     console.log(`no match for ${key} in array!`);
     return null;
+}
+
+const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader) => {
+    const logInfoStorage = window.localStorage.getItem(logID);
+    //console.log(logInfoStorage)
+    //let matchInfo;
+
+    let competitionHeaderText = '';
+    let matchHeaderText = '';
+    let competitionLink = '';
+    let matchLink = '';
+
+    if (!timestamp && suppliedMatchInfo) timestamp = new Date(suppliedMatchInfo.time * 1000);
+
+    if (logInfoStorage) {
+        console.log("existing match info")
+
+        if (logInfoStorage != "none") {
+            matchInfo = JSON.parse(logInfoStorage);
+            competitionHeaderText = matchInfo.competitionHeaderText;
+            matchHeaderText = matchInfo.matchHeaderText;
+            competitionLink = matchInfo.competitionLink;
+            matchLink = matchInfo.matchLink;
+        } else {
+            console.log("no comp match associated")
+            if (matchHeader) matchHeader.innerText = "No Match Found";
+            return null;
+        }
+    } else {
+        console.log("new match info")
+
+        let matchInfo;
+        matchInfo = suppliedMatchInfo ? suppliedMatchInfo : await getMatchData(listOfSteamIDs, timestamp, gamemode, logID);
+        //console.log(matchInfo);
+
+        if (matchInfo && matchInfo.league) {
+            console.log(`match found! league: ${matchInfo.league}, matchid: ${matchInfo.matchid}`);
+
+            const league = matchInfo.league;
+            const matchID = matchInfo.matchid;
+            switch(league) {
+                case "etf2l":
+                    //matchHeader.innerText = "Loading..."
+
+                    matchLink = `https://etf2l.org/matches/${matchID}/`;
+
+                    const etf2lMatchInfo = await getETF2LMatchByID(matchID);
+                    //console.log(etf2lMatchInfo)
+
+                    matchHeaderText = `${etf2lMatchInfo.division ? etf2lMatchInfo.division.name : ''}${etf2lMatchInfo.division ? ' - ' : ''}${etf2lMatchInfo.clan1.name} vs ${etf2lMatchInfo.clan2.name} (${etf2lMatchInfo.round})`
+
+                    const competitionID = etf2lMatchInfo.competition.id;
+                    //console.log(competitionID)
+                    const competitionInfo = await getETF2LCompetitionByID(competitionID);
+
+                    competitionHeaderText = `ETF2L: ${competitionInfo.name}`;
+
+                    if (competitionInfo.archived) {
+                        competitionLink = `https://etf2l.org/etf2l/archives/${competitionID}/1/`;
+                    } else {
+                        competitionLink = `https://etf2l.org/${competitionInfo.name.toLowerCase().replace(/(#|\s*:.+|\(|\))/g, '').replace(/\s/, '-')}-tables/`;
+                    }
+                    //console.log(competitionLink);
+                    break;
+                case "rgl":
+                    //matchHeader.innerText = "Loading..."
+
+                    matchLink = `https://rgl.gg/Public/Match?m=${matchID}`;
+                    //console.log(matchLink)
+
+                    const RGLMatchInfo = await getRGLMatchByID(matchID)
+
+                    competitionHeaderText = `RGL: ${RGLMatchInfo.seasonName}`;
+                    competitionLink = `https://rgl.gg/Public/LeagueTable?s=${RGLMatchInfo.seasonId}`
+                    //console.log(competitionLink)
+
+                    matchHeaderText = `${RGLMatchInfo.divisionName} - ${RGLMatchInfo.teams[0].teamName} vs ${RGLMatchInfo.teams[1].teamName} (${RGLMatchInfo.matchName.replace(/\s-\s.+/, '')})`
+                    break;
+                default:
+                    console.log(`unknown league ${league}! report this to me (masonator) on github so I can add support`)
+                    return;
+            }
+
+            const matchInfoToSave = {
+                competitionHeaderText: competitionHeaderText,
+                matchHeaderText: matchHeaderText,
+                competitionLink: competitionLink,
+                matchLink: matchLink
+            }
+
+            window.localStorage.setItem(logID, JSON.stringify(matchInfoToSave));
+            //matchHeader.innerText = "";
+        } else {
+            console.log(`no match found for log ${logID}`);
+            let timestampPlus30Minutes = new Date(timestamp.getTime());
+            timestampPlus30Minutes = timestampPlus30Minutes.setMinutes(timestampPlus30Minutes.getMinutes() + 30);
+            //console.log(timestamp.getTime())
+            //console.log(timestampPlus30Minutes);
+            if (timestampPlus30Minutes < Date.now()) {
+                window.localStorage.setItem(logID, "none");
+                console.log("marking log as not being associated with any competitive matches");
+                if (matchHeader) matchHeader.innerText = "No Match Found";
+            } else {
+                //console.log(Date.now())
+                //console.log(timestamp.getTime())
+                //console.log(Date.now() - timestamp.getTime())
+                //console.log(new Date(Date.now() - timestamp.getTime()).getTime())
+                //console.log(timestamp.getTime())
+                console.log(`log less than 30 minutes old, will check again for match info later (currently ${Math.floor(((Date.now() - timestamp.getTime())/10)/60)/100} minutes old)`);
+                if (matchHeader) matchHeader.innerText = "No Match Found, Check Again Later";
+            }
+            return null;
+        }
+    }
+    //console.log({competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink})
+    return {competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink};
 }

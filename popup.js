@@ -249,6 +249,12 @@ async function setShowClassesPlayed(newValue) {
     });
 }
 
+async function setShowOfficialMatches(newValue) {
+    await currentBrowser.storage.local.set({
+        showOfficialMatches: newValue
+    });
+}
+
 async function populateMatchInfoCheckbox(matchInfoInput) {
     const showMatchInfo = await currentBrowser.storage.local.get("showMatchInfo");
     const value = showMatchInfo.showMatchInfo;
@@ -395,6 +401,12 @@ async function populateShowClassesPlayed(showClassesPlayedInput) {
     showClassesPlayedInput.checked = value;
 }
 
+async function populateShowOfficialMatches(showOfficialMatchesInput) {
+    const showOfficialMatches = await currentBrowser.storage.local.get("showOfficialMatches");
+    const value = showOfficialMatches.showOfficialMatches;
+    showOfficialMatchesInput.checked = value;
+}
+
 /*window.onload = function() {
     console.log("onload" + Date())
 
@@ -427,6 +439,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const showMatchScoresInput = document.getElementById("show-match-scores");
     const showClassesPlayedInput = document.getElementById("show-classes-played");
+    const showOfficialMatchesInput = document.getElementById("show-official-matches");
 
     const themeInput = document.getElementById("theme-toggle");
 
@@ -455,6 +468,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     populateShowMatchScores(showMatchScoresInput);
     populateShowClassesPlayed(showClassesPlayedInput);
+    populateShowOfficialMatches(showOfficialMatchesInput);
 
     populateLeagueDropdownToggle(leagueDropdownInput, document);
     populateStatsDropdownToggle(statsDropdownInput, document);
@@ -479,6 +493,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     showMatchScoresInput.addEventListener("change", (e) => setShowMatchScores(e.target.checked));
     showClassesPlayedInput.addEventListener("change", (e) => setShowClassesPlayed(e.target.checked));
+    showOfficialMatchesInput.addEventListener("change", (e) => setShowOfficialMatches(e.target.checked));
 
     themeInput.addEventListener("change", (e) => setTheme(e.target.checked, document));
     
