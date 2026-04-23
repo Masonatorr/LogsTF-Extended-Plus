@@ -1,5 +1,6 @@
 const isFirefox = typeof browser !== "undefined";
 const currentBrowser = isFirefox ? browser : chrome;
+const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
 //Alias API fetch requests into easier-to-type functions
 //These send the request data to background.js, which has less restrictions on fetch requests than the main script
@@ -1601,6 +1602,37 @@ const deleteOfficialPopover = () => {
     document.getElementsByClassName("popover top in")[0].remove();
 }
 
+const injectDPM = async (icon) => {
+    let dataToDisplay = icon.getAttribute("data-content");
+    console.log(dataToDisplay)
+
+    let DPM = dataToDisplay.match(/(\d+(?=<\/td><\/tr><\/table>))/g)[0];
+
+    await timer(80)
+    let popup = document.getElementsByClassName("popover")[0];
+    if (!popup) {
+        for (check = 1; check <= 10; check++) {
+            await timer(5);
+            popup = document.getElementsByClassName("popover")[0];
+            if (popup) break;
+        }
+        if (!popup) return;
+    };
+    //popup.style.width = "auto";
+    const popupTopTable = popup.children[2].getElementsByTagName("table")[0];
+    console.log(popupTopTable)
+    const DPMHeader = popupTopTable.firstChild.firstChild.lastChild.cloneNode(true);
+    DPMHeader.innerText = "DA/M";
+    popupTopTable.firstChild.firstChild.appendChild(DPMHeader);
+    const DPMValue = popupTopTable.lastChild.firstChild.lastChild.cloneNode(true);
+    DPMValue.innerText = DPM;
+    popupTopTable.lastChild.firstChild.appendChild(DPMValue);
+}
+
+const parseTimeToSeconds = (timeString) => {
+    timeString = timeString.split(":")
+    return (parseInt(timeString[0]) * 60) + parseInt(timeString[1]);
+}
 
 const pageURL = document.URL
 if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
@@ -1621,9 +1653,20 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         for (let icon of classIcons) {
             let dataToDisplay = icon.getAttribute("data-content");
 
-            let timePlayed = dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0].split(":");
-            let secondsPlayed = (parseInt(timePlayed[0]) * 60) + parseInt(timePlayed[1]);
-            let damageDone = dataToDisplay.match(/(\d+(?=<\/td><\/tr><\/table>))/g)[0];
+            //Compensate for an error sometimes where a player's playtime on a class does not match the time in the log despite being in the game for the entire duration
+            const onlyOneClassPlayed = icon.parentElement.children.length == 1
+            let secondsPlayed
+            if (onlyOneClassPlayed) {
+                console.log(onlyOneClassPlayed)
+                const logTime = parseTimeToSeconds(document.getElementById("log-length").innerText);
+                console.log(logTime)
+                const classTime = parseTimeToSeconds(dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0])
+                console.log(classTime)
+                secondsPlayed = onlyOneClassPlayed && Math.abs(logTime - classTime) < 60 ? logTime : classTime;
+            } else {
+                secondsPlayed = parseTimeToSeconds(dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0])
+            }
+            const damageDone = dataToDisplay.match(/(\d+(?=<\/td><\/tr><\/table>))/g)[0];
 
             if (damageDone == 0 || secondsPlayed == 0) continue;
 
@@ -1658,6 +1701,12 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
                 leagueData.style.padding = "2px 10px 2px";
                 playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
             }
+
+            const classIcons = document.getElementsByClassName("classicon")
+            for (i = 0; i < classIcons.length; i++) {
+                let icon = classIcons[i]
+                icon.onmouseenter = function(){injectDPM(icon)}
+            };
 
             updatePlayerRows(playerRows, rglNameHeader);
 
