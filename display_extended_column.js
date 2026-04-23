@@ -1541,40 +1541,39 @@ const updateLogRows = async (steamID) => {
                 let weaponsUsed = [];
                 const weaponsUsedKeys = Object.keys(classPlayed.weapon);
                 //console.log(weaponsUsedKeys);
-                let hasPistol = false;
+                let alreadyHasPistol = false;
                 let hasScoutPistol = false;
                 let firstPistolIndex = -1
                 for (k = 0; k < weaponsUsedKeys.length; k++) {
-                    if (weaponsUsedKeys[k] == "pistol") {
+                    if (weaponsUsedKeys[k] in ["pistol", "pistol_scout"]) {
                         //console.log("pistol!")
-                        hasPistol = true
-                        if (hasScoutPistol) {
+                        if (alreadyHasPistol) {
                             //console.log("merging!")
                             weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
                             weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
                             weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
                             weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
                             weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
-                            continue;
                         } else {
                             firstPistolIndex = k;
                         }
+                        alreadyHasPistol = true
                     };
-                    if (weaponsUsedKeys[k] == "pistol_scout") {
-                        //console.log("scout pistol!")
-                        hasScoutPistol = true
-                        if (hasPistol) {
-                            //console.log("merging!")
-                            weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
-                            weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
-                            weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
-                            weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
-                            weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
-                            continue;
-                        } else {
-                            firstPistolIndex = k;
-                        }
-                    };
+                    //if (weaponsUsedKeys[k] == "pistol_scout") {
+                    //    //console.log("scout pistol!")
+                    //    hasScoutPistol = true
+                    //    if (hasPistol) {
+                    //        //console.log("merging!")
+                    //        weaponsUsed[firstPistolIndex][1].kills += classPlayed.weapon[weaponsUsedKeys[k]].kills;
+                    //        weaponsUsed[firstPistolIndex][1].dmg += classPlayed.weapon[weaponsUsedKeys[k]].dmg;
+                    //        weaponsUsed[firstPistolIndex][1].avg_dmg += classPlayed.weapon[weaponsUsedKeys[k]].avg_dmg;
+                    //        weaponsUsed[firstPistolIndex][1].shots += classPlayed.weapon[weaponsUsedKeys[k]].shots;
+                    //        weaponsUsed[firstPistolIndex][1].hits += classPlayed.weapon[weaponsUsedKeys[k]].hits;
+                    //        continue;
+                    //    } else {
+                    //        firstPistolIndex = k;
+                    //    }
+                    //};
                     weaponsUsed.push([weaponsUsedKeys[k], classPlayed.weapon[weaponsUsedKeys[k]]]);
                     //console.log(classPlayed.weapon[weaponsUsedKeys[k]]);
                 }
