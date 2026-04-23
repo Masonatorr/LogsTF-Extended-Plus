@@ -10,6 +10,7 @@ const getRGLPastTeams = async (steamID) => await sendMessageAndWait("rgl_past_te
 const getETF2LPastTeams = async (steamID) => await sendMessageAndWait("etf2l_past_teams", steamID);
 const getETF2LMatchesInTimeframe = async (searchParameters) => await sendMessageAndWait("etf2l_matches_in_timeframe", searchParameters);
 const getLogMatchInfo = async (searchParameters) => await sendMessageAndWait("log_match_info", searchParameters);
+const getLogMatchInfoBulk = async (searchParameters) => await sendMessageAndWait("log_match_info_bulk", searchParameters);
 const getETF2LMatchByID = async (matchID) => (await sendMessageAndWait("etf2l_match_by_id", matchID)).match;
 const getETF2LCompetitionByID = async (competitionID) => (await sendMessageAndWait("etf2l_competition_by_id", competitionID)).competition;
 const getRGLMatchByID = async (matchID) => await sendMessageAndWait("rgl_match_by_id", matchID);
@@ -54,6 +55,8 @@ const getShowMatchScoresFlag = async () => (await currentBrowser.storage.local.g
 	.showMatchScores;
 const getShowClassesPlayedFlag = async () => (await currentBrowser.storage.local.get("showClassesPlayed"))
 	.showClassesPlayed;
+const getShowOfficialMatchesFlag = async () => (await currentBrowser.storage.local.get("showOfficialMatches"))
+	.showOfficialMatches;
 
 const RGLDivisions = Object.freeze({
     None: 0,
