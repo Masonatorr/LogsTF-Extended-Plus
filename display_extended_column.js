@@ -1,16 +1,12 @@
 const isFirefox = typeof browser !== "undefined";
 const currentBrowser = isFirefox ? browser : chrome;
 
-const timer = (ms) => new Promise((res) => setTimeout(res, ms));
-
 //Alias API fetch requests into easier-to-type functions
 //These send the request data to background.js, which has less restrictions on fetch requests than the main script
 const getRGLProfile = async (steamID) => await sendMessageAndWait("rgl_profile", steamID);
 const getRGLProfilesBulk = async (steamIDList) => await sendMessageAndWait("rgl_profiles_bulk", steamIDList);
 const getETF2LProfile = async (steamID) => await sendMessageAndWait("etf2l_profile", steamID);
 const getRGLPastTeams = async (steamID) => await sendMessageAndWait("rgl_past_teams", steamID);
-const getETF2LPastTeams = async (steamID) => await sendMessageAndWait("etf2l_past_teams", steamID);
-const getETF2LMatchesInTimeframe = async (searchParameters) => await sendMessageAndWait("etf2l_matches_in_timeframe", searchParameters);
 const getLogMatchInfo = async (searchParameters) => await sendMessageAndWait("log_match_info", searchParameters);
 const getLogMatchInfoBulk = async (searchParameters) => await sendMessageAndWait("log_match_info_bulk", searchParameters);
 const getETF2LMatchByID = async (matchID) => (await sendMessageAndWait("etf2l_match_by_id", matchID)).match;
@@ -639,7 +635,7 @@ const getHighestRGLGamemodeTeam = async (pastTeams) => {
 }
 
 //Display ETF2L username on single-log page
-const updateETF2LNameOnPage = async (steamID, playerInfo, leagueElement) => {
+const updateETF2LNameOnPage = async (playerInfo, leagueElement) => {
     // Get rid of 'Loading...' message
     if (!getShowRGLTeamFlag()) leagueElement.innerHTML = "";
 
@@ -1147,7 +1143,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
         showETF2LTeam && (gamemode === "6s" || gamemode === "HL") && updateETF2LTeamOnPage(gamemode, playerInfo, leagueElement);
         showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
-        showETF2L && updateETF2LNameOnPage(steamID, playerInfo, leagueElement);
+        showETF2L && updateETF2LNameOnPage(playerInfo, leagueElement);
         showRGL && updateRGLName(steamID, playerInfo, leagueElement, gamemode);
         showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
         showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
@@ -1201,10 +1197,6 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
     };
 }
-
-const steamID64Base = "76561197960265728";
-const steamID64BasePrefix = "7656"
-const steamID64BaseShortened = 1197960265728;
 
 const keysToRemove = [
                         "version",
@@ -1367,6 +1359,7 @@ const updateLogRows = async (steamID) => {
 
             window.sessionStorage.setItem(curLogID, JSON.stringify(logInfo));
         }
+        const steamID64BaseShortened = 1197960265728;
     
         const steamID64 = steamID;
         const steamID64Shortened = steamID64.substring(steamID64.length - 13)
@@ -1445,7 +1438,7 @@ const updateLogRows = async (steamID) => {
                 classIcon.setAttribute("style", `opacity: ${opacity}`);
                 classIcon.setAttribute("data-title", formatting.title);
                 classIcon.setAttribute("data-content", dataString);
-                classIcon.onmouseenter = function(){showIconPopover(logInfo, classIcon, formatting.title)};
+                classIcon.onmouseenter = function(){showIconPopover(classIcon, formatting.title)};
                 classIcon.onmouseleave = function(){deleteIconPopover()};
                 classIcon.position = "relative"
                 classIconsList.appendChild(classIcon);
@@ -1525,7 +1518,7 @@ const showMatchInfo = async (playerRows) => {
     matchHeader.appendChild(matchHeaderHyperlink);
     competitionHeader.after(matchHeader);
 
-    const logInfo = await getOrSaveCachedLogInfo(logID, null, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader);
+    const logInfo = await getOrSaveCachedLogInfo(logID, null, listOfSteamIDs, timestamp, gamemode, matchHeader);
     if (logInfo == null) return;
 
     competitionHeaderHyperlink.href = logInfo.competitionLink;
@@ -1535,7 +1528,7 @@ const showMatchInfo = async (playerRows) => {
     matchHeaderHyperlink.innerText = logInfo.matchHeaderText;
 }
 
-const showIconPopover = (logInfo, classIcon, title) => {
+const showIconPopover = (classIcon, title) => {
     classPopover = document.createElement("div");
     classPopover.classList.add("popover", "top", "in");
     classPopover.style.display = "block";
@@ -1617,7 +1610,6 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         const steamID = pageURL.substring(pageURL.indexOf("profile") + 8, pageURL.lastIndexOf("?") != -1 ? pageURL.lastIndexOf("?") : pageURL.length);
 
         const mainElement = document.getElementsByClassName("container main")[0];
-        const tableElement = document.getElementsByClassName("clear")[0];
         mainElement.style = "width: fit-content !important; min-width: 980px !important";
 
         updateLogRows(steamID);
@@ -1911,7 +1903,7 @@ window.onload = async function() {
     }
 }
 
-async function processRow(el, index, array) {
+async function processRow(el) {
     const DTM = el.getElementsByTagName("td")[12];
     const DAM = el.getElementsByTagName("td")[8];
     const DT = el.getElementsByTagName("td")[11];
@@ -2020,7 +2012,7 @@ function findDictInArray(array, key, value) {
     return null;
 }
 
-const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, timestamp, gamemode, competitionHeader, matchHeader) => {
+const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, timestamp, gamemode, matchHeader) => {
     const logInfoStorage = window.localStorage.getItem(logID);
 
     let competitionHeaderText = '';

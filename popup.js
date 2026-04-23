@@ -9,16 +9,6 @@ async function setMatchInfoValue(newValue) {
     });
 }
 
-async function setETF2LValue(newValue) {
-    await currentBrowser.storage.local.set({
-        showETF2L: newValue
-    });
-
-    const dropdownDiv = document.getElementsByClassName("etf2l-dropdown-div")[0];
-
-    dropdownDiv.style.maxHeight = newValue ? `${dropdownDiv.scrollHeight}px` : "0px";
-}
-
 async function setETF2LNameValue(newValue) {
     await currentBrowser.storage.local.set({
         showETF2LName: newValue
@@ -34,12 +24,6 @@ async function setETF2LTeamValue(newValue) {
 async function setETF2LDivisionValue(newValue) {
     await currentBrowser.storage.local.set({
         showETF2LDivision: newValue
-    });
-}
-
-async function setRGLValue(newValue) {
-    await currentBrowser.storage.local.set({
-        showRGL: newValue
     });
 }
 
@@ -97,12 +81,10 @@ async function setTheme(newValue, document) {
         theme: newValue
     });
 
-    const body = document.getElementsByTagName("body")[0];
     const bodyCSS = getCSSRule("body");
 
     const themeGrid = document.getElementById("theme-grid");
 
-    const slider = themeGrid.children[1];
     const sliderCSS = getCSSRule(".slider");
     const sliderSquareCSS = getCSSRule(".slider:before");
 
@@ -159,8 +141,6 @@ async function setTheme(newValue, document) {
 
     damagePercentTotalOrTeamLeftVal.style.color = damagePercentFlag.damagePercentTotalOrTeam ? disabledColor : enabledColor;
     damagePercentTotalOrTeamRightVal.style.color = damagePercentFlag.damagePercentTotalOrTeam ? enabledColor : disabledColor;
-
-    const dropdownText = document.getElementsByClassName("dropdown-text");
 }
 
 async function setLeagueDropdown(newValue, document) {
@@ -170,8 +150,6 @@ async function setLeagueDropdown(newValue, document) {
 
     const dropdownText = document.getElementsByClassName("dropdown-text-league")[0];
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
-
-    const themeVal = await currentBrowser.storage.local.get("theme");
 
     const dropdownDiv = document.getElementsByClassName("league-dropdown-div")[0];
 
@@ -186,8 +164,6 @@ async function setStatsDropdown(newValue, document) {
     const dropdownText = document.getElementsByClassName("dropdown-text-stats")[0];
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
 
-    const themeVal = await currentBrowser.storage.local.get("theme");
-
     const dropdownDiv = document.getElementsByClassName("stats-dropdown-div")[0];
 
     dropdownDiv.style.maxHeight = newValue ? `${dropdownDiv.scrollHeight}px` : "0px";
@@ -200,8 +176,6 @@ async function setProfileDropdown(newValue, document) {
 
     const dropdownText = document.getElementsByClassName("dropdown-text-profile")[0];
     dropdownText.innerText = newValue ? "Collapse" : "Expand";
-
-    const themeVal = await currentBrowser.storage.local.get("theme");
 
     const dropdownDiv = document.getElementsByClassName("profile-dropdown-div")[0];
 
@@ -256,13 +230,6 @@ async function populateMatchInfoCheckbox(matchInfoInput) {
     matchInfoInput.checked = value;
 }
 
-async function populateETF2LCheckbox(etf2lInput) {
-    const showETF2L = await currentBrowser.storage.local.get("showETF2L");
-    const value = showETF2L.showETF2L;
-    etf2lInput.checked = value;
-    setETF2LValue(value)
-}
-
 async function populateETF2LNameCheckbox(etf2lNameInput) {
     const showETF2LName = await currentBrowser.storage.local.get("showETF2LName");
     etf2lNameInput.checked = showETF2LName.showETF2LName;
@@ -276,11 +243,6 @@ async function populateETF2LTeamCheckbox(etf2lTeamInput) {
 async function populateETF2LDivisionCheckbox(etf2lDivisionInput) {
     const showETF2LDivision = await currentBrowser.storage.local.get("showETF2LDivision");
     etf2lDivisionInput.checked = showETF2LDivision.showETF2LDivision;
-}
-
-async function populateRGLCheckbox(rglInput) {
-    const showRGL = await currentBrowser.storage.local.get("showRGL");
-    rglInput.checked = showRGL.showRGL;
 }
 
 async function populateRGLNameCheckbox(rglNameInput) {
