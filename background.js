@@ -168,8 +168,8 @@ const getETF2LPastTeams = async (steamID) => {
 
 const getLogMatchInfo = async (logInfo) => {
     //console.log("get match");
-    const uriTrends = new URL("https://trends.tf/api/v1/logs");
     //const uriLog = `https://trends.tf/api/v1/logs?steamid64=${logInfo.players[0]}&steamid64=${logInfo.players[logInfo.players.length - 1]}&time_from=${logInfo.startTime}&time_to=${logInfo.endTime}`;
+    const uriTrends = new URL(`https://trends.tf/api/v1/logs`);
 
     const params = {
         "steamid64": logInfo.players[0],
