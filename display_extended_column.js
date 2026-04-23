@@ -1671,7 +1671,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             if (damageDone == 0 || secondsPlayed == 0) continue;
 
             dataToDisplay = dataToDisplay.replace(/((?<=<th>D<\/th><th>DA)<\/th>)/g, `</th><th>DA\/M</th>`); //add dpm header
-            dataToDisplay = dataToDisplay.replace(/(<\/td>(?=<\/tr><\/table>))/g, `</td><td>${(parseInt(damageDone) / (secondsPlayed / 60)).toFixed(0)}</td>`);
+            dataToDisplay = dataToDisplay.replace(/(<\/td>(?=<\/tr><\/table>))/g, `</td><td>${Math.floor(parseInt(damageDone) / (secondsPlayed / 60))}</td>`);
 
             icon.setAttribute("data-content", dataToDisplay);
         }
