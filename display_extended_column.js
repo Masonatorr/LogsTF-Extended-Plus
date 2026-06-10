@@ -640,7 +640,7 @@ const updateETF2LNameOnPage = async (playerInfo, leagueElement) => {
     // Get rid of 'Loading...' message
     if (!getShowRGLTeamFlag()) leagueElement.innerHTML = "";
 
-    if (!playerInfo.etf2l.name) return;
+    if (!playerInfo.etf2l.name || playerInfo.etf2l.name == "None") return;
 
     const etf2lLink = document.createElement("a");
     etf2lLink.innerHTML = playerInfo.etf2l.name;
@@ -674,10 +674,10 @@ const updateETF2LNameOnPage = async (playerInfo, leagueElement) => {
 
 //Display ETF2L team on single-log page
 const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
-	if (!playerInfo.etf2l.name) return;
+	if (!playerInfo.etf2l.name || playerInfo.etf2l.name == "None") return;
 	const teamName = (gamemode === "6s" ? playerInfo.etf2l.currentTeam6s : playerInfo.etf2l.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.etf2l.currentTeamID6s : playerInfo.etf2l.currentTeamIDHL);
-	if (!teamName) return;
+	if (!teamName || teamName == "None") return;
     //Copied from RGL team code, dunno if necessary
     if (teamName.includes("Free Agent -")) return;
 
@@ -696,7 +696,7 @@ const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 //Display ETF2L division on single-log page
 const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
     let division;
-    if (!playerInfo.etf2l.name) {
+    if (!playerInfo.etf2l.name || playerInfo.etf2l.name == "None") {
         return;
     } else {
         const getHighestDivison = await getHighestDivisionPlayedFlag();
@@ -730,7 +730,7 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
 
 //Display RGL name on single-log page
 const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode) => {
-    if (!playerInfo.rgl.name) {
+    if (!playerInfo.rgl.name || playerInfo.rgl.name == "None") {
         //If this log is 6s or HL and this player doesnt have an RGL or ETF2L profile, display "N/A" in place of their div
         if (!(["6s", "HL"].includes(playedGamemode)) && !playerInfo.etf2l.name) {
             const rglLink = document.createElement("a");
@@ -775,10 +775,10 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
 
 //Display RGL team on single-log page
 const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
-	if (!playerInfo.rgl.name) return;
+	if (!playerInfo.rgl.name || playerInfo.rgl.name == "None") return;
 	const teamName = (gamemode === "6s" ? playerInfo.rgl.currentTeam6s : playerInfo.rgl.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.rgl.currentTeamID6s : playerInfo.rgl.currentTeamIDHL);
-	if (!teamName) return;
+	if (!teamName || teamName == "None") return;
     if (teamName.includes("Free Agent -")) return;
 
 
@@ -796,7 +796,7 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 //Display RGL division on single-log page
 const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement) => {
     let division;
-    if (!playerInfo.rgl.name) {
+    if (!playerInfo.rgl.name || playerInfo.rgl.name == "None") {
         if (!(["6s", "HL"].includes(playedGamemode))) return;
         if (playerInfo.etf2l.name) return;
         division = "NA";
