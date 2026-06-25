@@ -1,9 +1,13 @@
-# Logs.TF-Extended-Plus
+If you have any issues or suggestions, please post them in the [Issues](https://github.com/Masonatorr/LogsTF-Extended-Plus/issues) tab!
+
+# Logs.TF Extended Plus
 GitHub page for the Logs.TF Extended Plus browser extension.
 
 [Chrome Web Store](https://chromewebstore.google.com/detail/logstf-extended-plus/ajibpnhcbfhfjljjgbbbpfnhecgoifba) | [Firefox Addons](https://addons.mozilla.org/en-US/firefox/addon/logs-tf-extended-plus/)
 
 Based on [Logs.TF Extended](https://chromewebstore.google.com/detail/logstfextended/jcgpbbalnjcjedofegcdmeidnllgmapn) by Kore4n and [logs.tf Data Enhancer](https://chromewebstore.google.com/detail/logstf-data-enhancer/nicfbjfmppdohagebckodgnlmgilkeil) by magistr
+
+Extension options can be accessed by clicking the icon in your extensions bar.
 
 Adds the following information when viewing single logs:
 - RGL/ETF2L official associated with the current log (if any), showing the league name, season/competition name, division name, team names, and the specific match played, with links to the season/competition and match pages
@@ -24,4 +28,4 @@ Adds the following information when viewing a list of logs (i.e. the main page o
 
 Has support for Jack's Logs Combiner.
 
-Version notes can be found in [Releases](https://github.com/Masonatorr/LogsTF-Extended-Plus/releases)
+Version notes can be found in [Releases](https://github.com/Masonatorr/LogsTF-Extended-Plus/releases).
