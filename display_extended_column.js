@@ -1,4 +1,4 @@
-const isFirefox = typeof browser !== "undefined";
+const isFirefox = typeof InstallTrigger !== "undefined";
 const currentBrowser = isFirefox ? browser : chrome;
 const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
