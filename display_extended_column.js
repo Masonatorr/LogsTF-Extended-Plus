@@ -14,6 +14,7 @@ const getETF2LMatchByID = async (matchID) => (await sendMessageAndWait("etf2l_ma
 const getETF2LCompetitionByID = async (competitionID) => (await sendMessageAndWait("etf2l_competition_by_id", competitionID)).competition;
 const getRGLMatchByID = async (matchID) => await sendMessageAndWait("rgl_match_by_id", matchID);
 const getLogInfo = async (logID) => await sendMessageAndWait("log_info", logID);
+const getDemoLink = async (searchParameters) => await sendMessageAndWait("demo_link", searchParameters);
 
 //Function for sending request data to background.js
 const sendMessageAndWait = async (type, inputData) =>
@@ -1547,6 +1548,37 @@ const showMatchInfo = async (playerRows) => {
     matchHeaderHyperlink.innerText = logInfo.matchHeaderText;
 }
 
+const showDemoLink = async (playerRows) => {
+    if (!(await getShowMatchInfoFlag())) return;
+    const arrayOfPlayerRows = [...playerRows];
+    const listOfSteamIDs = arrayOfPlayerRows.map((playerRow) => playerRow.id.split("_")[1]);
+
+    const dateTime = document.getElementsByClassName("datefield")[0];
+    const timestamp = dateTime.getAttribute("data-timestamp");
+
+    const playerCount = listOfSteamIDs.length;
+
+    const logID = pageURL.substring(pageURL.lastIndexOf("/") + 1, pageURL.lastIndexOf("#") != -1 ? pageURL.lastIndexOf("#") : pageURL.length);
+
+    const demoHeader = document.createElement("h3");
+    const demoHeaderHyperlink = document.createElement("a");
+
+    const logDurationHeader = document.getElementById("log-length");
+
+    const mapHeader = document.getElementById("log-map");
+    const mapPlayed = mapHeader.innerText;
+
+    demoHeader.appendChild(demoHeaderHyperlink);
+    console.log(demoHeader)
+    logDurationHeader.after(demoHeader);
+
+    const demoLink = await getOrSaveCachedDemoLink(logID, mapPlayed, listOfSteamIDs[0], timestamp, playerCount);
+
+    demoHeaderHyperlink.href = demoLink != null && demoLink != "none" ? demoLink : "";
+    demoHeaderHyperlink.innerText = demoLink != null && demoLink != "none" ? "Demos.tf" : demoLink != "none" ? "No Demo Found, Check Again Later" : "No Demo Found";
+    if (demoLink == null || demoLink == "none") demoHeader.innerText = demoLink != "none" ? "No Demo Found, Check Again Later" : "No Demo Found";
+}
+
 const showIconPopover = (classIcon, title) => {
     classPopover = document.createElement("div");
     classPopover.classList.add("popover", "top", "in");
@@ -1735,6 +1767,8 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             updatePlayerRows(playerRows, rglNameHeader);
 
             showMatchInfo(playerRows);
+
+            showDemoLink(playerRows);
         }
     } else if (!(pageURL.length <= 16 || pageURL.includes("tf/?p=") || pageURL.includes("tf/popular"))) {
         console.log("Nothing to do on this page")
@@ -2187,6 +2221,66 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
         }
     }
     return {competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink};
+}
+
+const getOrSaveCachedDemoLink = async (logID, map, player, timestamp, playerCount) => {
+    const demoLink = window.localStorage.getItem(`${logID}_demo`);
+    
+    let demoURL = ""
+
+    if (demoLink) {
+        if (demoLink != "none") {
+            return demoLink;
+        } else {
+            return "none";
+        }
+    } else {
+        console.log(map);
+        console.log(timestamp);
+        console.log(player);
+        const demoResults = await getDemoLink({
+            "map": map,
+            "time": timestamp,
+            "player": player,
+        });
+
+        if (demoResults) {
+            redScore = document.getElementsByClassName("score red")[0].getElementsByClassName("pull-left")[0].innerText;
+            bluScore = document.getElementsByClassName("score blu")[0].getElementsByClassName("pull-right")[0].innerText;
+            for (i = 0; i < demoResults.length; i++) {
+                demoInfo = demoResults[i];
+                if (
+                    demoInfo.redScore == redScore
+                    && demoInfo.blueScore == bluScore
+                    && demoInfo.playerCount == playerCount
+                ) {
+                    demoURL = `https://demos.tf/${demoInfo.id}`
+                }
+            }
+            if (demoURL == "") {
+                console.log(`no demo found for log ${logID}`);
+                let timestampPlus5Minutes = parseInt(timestamp) + 300;
+                if (timestampPlus5Minutes < (Date.now() / 1000)) {
+                    window.localStorage.setItem(`${logID}_demo`, "none");
+                    return "none";
+                }
+                return null;
+            }
+
+            console.log(`demo found! link: https://demos.tf/${demoInfo.id}`);
+
+            window.localStorage.setItem(`${logID}_demo`, demoURL);
+        } else {
+            console.log(`no demo found for log ${logID}`);
+            let timestampPlus5Minutes = parseInt(timestamp) + 300;
+            if (timestampPlus5Minutes < (Date.now() / 1000)) {
+                window.localStorage.setItem(`${logID}_demo`, "none");
+                return "none";
+            }
+            return null;
+        }
+    }
+    return demoURL;
 }
 
 function putLeagueDataInSlot(main_element, slot_type, data) {

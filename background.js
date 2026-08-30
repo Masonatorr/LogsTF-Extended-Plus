@@ -330,6 +330,40 @@ const getRGLMatchByID = async (matchID) => {
     return response.json();
 };
 
+const getDemoLink = async (searchParameters) => {
+    const uriDemo = new URL(`https://api.demos.tf/demos`);
+    searchParameters.time = parseInt(searchParameters.time);
+    const params = {
+        "map": searchParameters.map,
+        "before": searchParameters.time + 240,
+        "after": searchParameters.time - 60,
+        "players[]": searchParameters.player
+    }
+    Object.keys(params)
+            .forEach(key => uriDemo.searchParams.append(key, params[key]));
+
+    await timer(500);
+    let response = await fetch(uriDemo);
+    if (checkForErrors(response) === "ratelimit") {
+        for (i = 0; i < 10; i++) {
+            console.log(`retrying after ${2000 * (i + 1)}ms`);
+            await timer(2000 * (i + 1));
+            response = await fetch(uriDemo);
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
+        }
+        return "ratelimited";
+    } else if (checkForErrors(response)) {
+        return;
+    }
+
+    return response.json();
+};
+
 const getAllData = async (inputData, messageType) => {
     let data;
     if (messageType === "rgl_profile")
@@ -402,6 +436,12 @@ const getAllData = async (inputData, messageType) => {
 	{
     	data = await getLogInfo(inputData);
 		console.log("Log Info")
+		console.log(data)
+    }
+	else if (messageType === "demo_link")
+	{
+    	data = await getDemoLink(inputData);
+		console.log("Demo Link")
 		console.log(data)
     }
     return data;
