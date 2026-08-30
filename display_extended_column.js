@@ -468,7 +468,25 @@ const WeaponLookupTable = Object.freeze({
 const OfficialCheckmarkColorShifts = Object.freeze({
     rglgg: "0deg",
     etf2l: "180deg"
-})
+});
+
+const LeagueDataIndices = Object.freeze({
+    0: "etf2l_team",
+    1: "rgl_team",
+    2: "etf2l_name",
+    3: "rgl_name",
+    4: "etf2l_div",
+    5: "rgl_div",
+});
+
+const LeagueDataIndicesInverse = Object.freeze({
+    etf2l_team: 0,
+    rgl_team: 1,
+    etf2l_name: 2,
+    rgl_name: 3,
+    etf2l_div: 4,
+    rgl_div: 5,
+});
 
 //Takes the player's past teams and current gamemode and returns the highest div they've played in
 const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
@@ -650,7 +668,7 @@ const updateETF2LNameOnPage = async (playerInfo, leagueElement) => {
     etf2lLink.style.padding = "6px";
     etf2lLink.style.margin = "6px 0px 6px 6px";
 	if (getShowRGLTeamFlag()) etf2lLink.style.marginLeft = "6px";
-    leagueElement.appendChild(etf2lLink);
+    putLeagueDataInSlot(leagueElement, "etf2l_name", etf2lLink);
 
     //Determine whether the player is banned, and if so display ban info
     const banInfo = playerInfo.etf2l.banInfo;
@@ -690,7 +708,7 @@ const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	etf2lTeamLink.style.padding = "6px";
 	etf2lTeamLink.style.margin = "6px 0px 6px 0px";
 
-	leagueElement.appendChild(etf2lTeamLink);
+    putLeagueDataInSlot(leagueElement, "etf2l_team", etf2lTeamLink);
 }
 
 //Display ETF2L division on single-log page
@@ -725,7 +743,7 @@ const updateETF2LDivisionOnPage = async (playedGamemode, playerInfo, leagueEleme
     etf2lDivisionElement.style.borderStyle = "solid";
     etf2lDivisionElement.style.borderColor = "rgb(144, 238, 144)";
 
-    leagueElement.appendChild(etf2lDivisionElement);
+    putLeagueDataInSlot(leagueElement, "etf2l_div", etf2lDivisionElement);
 }
 
 //Display RGL name on single-log page
@@ -758,7 +776,7 @@ const updateRGLName = async (steamID, playerInfo, leagueElement, playedGamemode)
 
     rglLink.innerHTML = playerInfo.rgl.name;
 
-    leagueElement.appendChild(rglLink);
+    putLeagueDataInSlot(leagueElement, "rgl_name", rglLink);
     if (!banWarning) return;
 
     const banWarningSpan = document.createElement("span");
@@ -790,7 +808,7 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	rglTeamLink.style.padding = "6px";
 	rglTeamLink.style.margin = "6px 0px 6px 6px";
 
-	leagueElement.appendChild(rglTeamLink);
+    putLeagueDataInSlot(leagueElement, "rgl_team", rglTeamLink);
 }
 
 //Display RGL division on single-log page
@@ -830,7 +848,7 @@ const updateRGLDivisionOnPage = async (playedGamemode, playerInfo, leagueElement
 
     //Detect if this element causes a line wrap, if so do some special formatting
     const oldHeight = leagueElement.offsetHeight;
-    leagueElement.appendChild(rglDivisionElement);
+    putLeagueDataInSlot(leagueElement, "rgl_div", rglDivisionElement);
     const newHeight = leagueElement.offsetHeight;
     if (playerInfo.etf2l.name && newHeight > oldHeight && newHeight > 49) {
         leagueElement.children[leagueElement.children.length - 2].style.marginRight = "-3px";
@@ -1645,7 +1663,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
         mainElement.style = "width: fit-content !important; min-width: 980px !important";
 
         updateLogRows(steamID);
-    } else if (pageURL.length > 16 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) {
+    } else if (pageURL.length > 16 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) { // Single log
         console.log("Parsing single log stats and info!")
 
         let classIcons = document.getElementsByClassName("classicon");
@@ -1657,11 +1675,11 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             const onlyOneClassPlayed = icon.parentElement.children.length == 1
             let secondsPlayed
             if (onlyOneClassPlayed) {
-                console.log(onlyOneClassPlayed)
+                //console.log(onlyOneClassPlayed)
                 const logTime = parseTimeToSeconds(document.getElementById("log-length").innerText);
-                console.log(logTime)
+                //console.log(logTime)
                 const classTime = parseTimeToSeconds(dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0])
-                console.log(classTime)
+                //console.log(classTime)
                 secondsPlayed = onlyOneClassPlayed && Math.abs(logTime - classTime) < 60 ? logTime : classTime;
             } else {
                 secondsPlayed = parseTimeToSeconds(dataToDisplay.match(/((?<=<tbody><tr><td>)\d+:\d+)/g)[0])
@@ -1676,7 +1694,7 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
             icon.setAttribute("data-content", dataToDisplay);
         }
 
-        if (!isFirefox) {
+        if (!isFirefox) {   // Some things work differently on firefox vs chrome, such as the order stuff happens. Some of this stuff is specific to chrome.
             const mainElement = document.getElementsByClassName("container main")[0];
             mainElement.style = "minWidth: 1400px !important; width: fit-content !important";
 
@@ -1695,14 +1713,20 @@ if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.inc
 
             const playerRows = playerTableBody.children;
 
-            for (let i = 0; i < playerRows.length; i++) {
+            for (let i = 0; i < playerRows.length; i++) {   // Create the element on each line that holds league data
                 const leagueData = document.createElement("td");
                 leagueData.innerHTML = "";
                 leagueData.style.padding = "2px 10px 2px";
+                leagueData.id = "leagueData";
+                for (let j = 0; j < Object.keys(LeagueDataIndices).length; j++) {    // Create premade slots for each bit of league info, makes quick editing easier
+                    const infoSlot = this.document.createElement("span");
+                    infoSlot.id = LeagueDataIndices[j];
+                    leagueData.appendChild(infoSlot);
+                }
                 playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
             }
 
-            const classIcons = document.getElementsByClassName("classicon")
+            const classIcons = document.getElementsByClassName("classicon");
             for (i = 0; i < classIcons.length; i++) {
                 let icon = classIcons[i]
                 icon.onmouseenter = function(){injectDPM(icon)}
@@ -1724,14 +1748,14 @@ const combinerOffsetCompleted = new Promise(res => {markCombinerOffsetComplete =
 
 window.onload = async function() {
     const pageURL = document.URL
-    if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {
+    if (pageURL.includes("logs.tf/") && !(pageURL.includes("json")) && !(pageURL.includes("uploads"))) {    // Only run on compatible pages
         console.log("valid page")
-        if (pageURL.includes("profile")) {
-            const combinerButtons = document.getElementsByClassName("log_add_button");
-            if (await getShowMatchScoresFlag() && combinerButtons.length > 0) {
+        if (pageURL.includes("profile")) {  // Player profile pages, this means we want to get score/player info on these logs as well as official info
+            const combinerButtons = document.getElementsByClassName("log_add_button");  // Begin compatibility for jack's logs combiner, find all log combiner buttons if any
+            if (await getShowMatchScoresFlag() && combinerButtons.length > 0) { // If "Show Match Scores" is on, stop scores from overlapping with the combiner buttons
                 await scoreColumnCompleted;
                 console.log("offsetting log combiner buttons!");
-                this.document.getElementsByClassName("loglist")[0].style.marginLeft = "11px"
+                this.document.getElementsByClassName("loglist")[0].style.marginLeft = "11px"    // Offset rows to the right to make space for combiner buttons
                 for (let element of combinerButtons) {
                     let parentElement = element.parentNode;
                     let previousElement = parentElement.previousElementSibling;
@@ -1743,7 +1767,7 @@ window.onload = async function() {
                 console.log("no log combiner buttons to offset");
                 markCombinerOffsetComplete();
             }
-        } else if (pageURL.length > 17 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) {
+        } else if (pageURL.length > 17 && !(pageURL.includes("tf/?p=")) && !(pageURL.includes("tf/popular"))) { // Single logs, fetch official info and calculate extra stats
             console.log("onload singlelog")
 
             if (isFirefox) {
@@ -1765,10 +1789,16 @@ window.onload = async function() {
 
                 const playerRows = playerTableBody.children;
 
-                for (let i = 0; i < playerRows.length; i++) {
+                for (let i = 0; i < playerRows.length; i++) {   // Create the element on each line that holds league data
                     const leagueData = document.createElement("td");
                     leagueData.innerHTML = "";
                     leagueData.style.padding = "2px 10px 2px";
+                    leagueData.id = "leagueData";
+                    for (let j = 0; j < Object.keys(LeagueDataIndices).length; j++) {   // Create premade slots for each bit of league info, makes quick editing easier
+                        const infoSlot = this.document.createElement("span");
+                        infoSlot.id = LeagueDataIndices[j];
+                        leagueData.appendChild(infoSlot);
+                    }
                     playerRows[i].insertBefore(leagueData, playerRows[i].firstChild);
                 }
 
@@ -2157,4 +2187,14 @@ const getOrSaveCachedLogInfo = async (logID, suppliedMatchInfo, listOfSteamIDs, 
         }
     }
     return {competitionHeaderText: competitionHeaderText, matchHeaderText: matchHeaderText, competitionLink: competitionLink, matchLink: matchLink};
+}
+
+function putLeagueDataInSlot(main_element, slot_type, data) {
+    const slotIndex = LeagueDataIndicesInverse[slot_type];
+    const slot = main_element.childNodes[slotIndex];
+    if (slot.childNodes.length == 0) {
+        slot.appendChild(data);
+    } else {
+        slot.firstChild.replaceWith(data);
+    }
 }
