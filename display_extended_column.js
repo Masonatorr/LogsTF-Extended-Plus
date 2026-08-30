@@ -1223,7 +1223,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfoToInsert, leagueElement);
     };
 
-    //If any fetches were skipped, do them here
+    //If any fetches were skipped by visibility settings, do them here
     for (let i = 0; i < listOfSteamIDsInStorageThatSkippedFetches.length; i++) {
         const steamID = listOfSteamIDsInStorageThatSkippedFetches[i];
 
@@ -1712,7 +1712,7 @@ const deleteOfficialPopover = () => {
 
 const injectDPM = async (icon) => {
     let dataToDisplay = icon.getAttribute("data-content");
-    console.log(dataToDisplay)
+    //console.log(dataToDisplay)
 
     let DPM = dataToDisplay.match(/(\d+(?=<\/td><\/tr><\/table>))/g)[0];
 
@@ -1728,7 +1728,7 @@ const injectDPM = async (icon) => {
     };
     //popup.style.width = "auto";
     const popupTopTable = popup.children[2].getElementsByTagName("table")[0];
-    console.log(popupTopTable)
+    //console.log(popupTopTable)
     const DPMHeader = popupTopTable.firstChild.firstChild.lastChild.cloneNode(true);
     DPMHeader.innerText = "DA/M";
     popupTopTable.firstChild.firstChild.appendChild(DPMHeader);
