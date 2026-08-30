@@ -31,7 +31,12 @@ const getRGLPastTeams = async (steamID) => {
             console.log(`retrying after ${3000 * (i + 1)}ms`);
             await timer(3000 * (i + 1));
             response = await fetch(uri);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -51,7 +56,12 @@ const getRGLProfile = async (steamID) => {
             console.log(`retrying after ${3000 * (i + 1)}ms`);
             await timer(3000 * (i + 1));
             response = await fetch(uri);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -76,7 +86,12 @@ const getRGLProfilesBulk = async (steamIDList) => {
                                     body: JSON.stringify(steamIDList),
                                     headers: {'accept': '*/*', 'Content-Type': 'application/json'}
                                     });
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -96,7 +111,12 @@ const getETF2LProfile = async (steamID) => {
             console.log(`retrying after ${3000 * (i + 1)}ms`);
             await timer(3000 * (i + 1));
             response = await fetch(uriETF2L);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -116,7 +136,12 @@ const getETF2LPastTeams = async (steamID) => {
             console.log(`retrying after ${3000 * (i + 1)}ms`);
             await timer(3000 * (i + 1));
             response = await fetch(uriETF2L);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -151,7 +176,12 @@ const getLogMatchInfo = async (logInfo) => {
             response = await fetch(uriTrends, {
                                             method: 'GET',
                                           });
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (error) {
@@ -185,7 +215,12 @@ const getLogMatchInfoBulk = async (searchInfo) => {
             response = await fetch(uriTrends, {
                                             method: 'GET',
                                           });
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (error) {
@@ -205,7 +240,12 @@ const getLogInfo = async (logID) => {
             console.log(`retrying after ${200 * (i + 1)}ms`);
             await timer(200 * (i + 1));
             response = await fetch(uriLog);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -225,7 +265,12 @@ const getETF2LMatchByID = async (matchID) => {
             console.log(`retrying after ${2000 * (i + 1)}ms`);
             await timer(2000 * (i + 1));
             response = await fetch(uriMatch);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -245,7 +290,12 @@ const getETF2LCompetitionByID = async (competitionID) => {
             console.log(`retrying after ${2000 * (i + 1)}ms`);
             await timer(2000 * (i + 1));
             response = await fetch(uriCompetition);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
@@ -265,7 +315,12 @@ const getRGLMatchByID = async (matchID) => {
             console.log(`retrying after ${2000 * (i + 1)}ms`);
             await timer(2000 * (i + 1));
             response = await fetch(uriMatch);
-            if (!checkForErrors(response)) return await response.json();
+            error = checkForErrors(response);
+            if (error && (error != "ratelimit")) {
+                return;
+            } else if (!error) {
+                return await response.json();
+            }
         }
         return "ratelimited";
     } else if (checkForErrors(response)) {
