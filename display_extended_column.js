@@ -696,7 +696,10 @@ const updateETF2LTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	if (!playerInfo.etf2l.name || playerInfo.etf2l.name == "None") return;
 	const teamName = (gamemode === "6s" ? playerInfo.etf2l.currentTeam6s : playerInfo.etf2l.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.etf2l.currentTeamID6s : playerInfo.etf2l.currentTeamIDHL);
-	if (!teamName || teamName == "None") return;
+	if (!teamName || teamName == "None") {
+        removeLeagueDataFromSlot(leagueElement, "etf2l_team");
+        return;
+    }
     //Copied from RGL team code, dunno if necessary
     if (teamName.includes("Free Agent -")) return;
 
@@ -797,7 +800,11 @@ const updateRGLTeamOnPage = async (gamemode, playerInfo, leagueElement) => {
 	if (!playerInfo.rgl.name || playerInfo.rgl.name == "None") return;
 	const teamName = (gamemode === "6s" ? playerInfo.rgl.currentTeam6s : playerInfo.rgl.currentTeamHL);
 	const teamID = (gamemode === "6s" ? playerInfo.rgl.currentTeamID6s : playerInfo.rgl.currentTeamIDHL);
-	if (!teamName || teamName == "None") return;
+	if (!teamName || teamName == "None") {
+        removeLeagueDataFromSlot(leagueElement, "rgl_team");
+        //console.log("removed team for " + playerInfo.rgl.name);
+        return;
+    }
     if (teamName.includes("Free Agent -")) return;
 
 
@@ -1082,15 +1089,21 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 	}
 
     let allPlayersCached = true;
+    let anyPlayersCached = false;
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         if (!window.localStorage.getItem(listOfSteamIDs[i])) {
             allPlayersCached = false;
+            if (anyPlayersCached) break;
             //console.log("all players cached?")
             //console.log(allPlayersCached)
-            break;
+            //break;
+        } else {
+            anyPlayersCached = true;
+            if (!allPlayersCached) break;
         }
     }
 
+    if (anyPlayersCached) immediatelyPopulatePlayerRows(playerRows);
     
     const allRGLInfoDisabled = ![showRGL, showRGLTeam, showRGLDivision].includes(true)
 
@@ -1199,6 +1212,15 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         if (playerInfoToInsert === "ratelimited") continue;
         
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
+
+        const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID).firstChild;
+
+        showETF2LTeam && (gamemode === "6s" || gamemode === "HL") && updateETF2LTeamOnPage(gamemode, playerInfoToInsert, leagueElement);
+        showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfoToInsert, leagueElement);
+        showETF2L && updateETF2LNameOnPage(playerInfoToInsert, leagueElement);
+        showRGL && updateRGLName(steamID, playerInfoToInsert, leagueElement, gamemode);
+        showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfoToInsert, leagueElement);
+        showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfoToInsert, leagueElement);
     };
 
     //If any fetches were skipped, do them here
@@ -1216,6 +1238,42 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
     };
+}
+
+// Immediately show cached player info where possible
+const immediatelyPopulatePlayerRows = async (playerRows, rglNameHeader) => {
+    const arrayOfPlayerRows = [...playerRows];
+    const listOfSteamIDs = arrayOfPlayerRows.map((playerRow) => playerRow.id.split("_")[1]);
+    
+	const gamemode = currentBrowser.storage.local.get("playedGamemode");
+    
+    const showETF2L = await getShowETF2LNameFlag();
+    const showETF2LTeam = await getShowETF2LTeamFlag();
+    const showETF2LDivision = await getShowETF2LDivisionFlag();
+    const showRGL = await getShowRGLNameFlag();
+    const showRGLTeam = await getShowRGLTeamFlag();
+    const showRGLDivision = await getShowRGLDivisionFlag();
+
+
+    for (let i = 0; i < listOfSteamIDs.length; i++) {
+        const steamID = listOfSteamIDs[i];
+        const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID).firstChild;
+
+        const playerInfoStorage = window.localStorage.getItem(steamID);
+        let playerInfo;
+        if (playerInfoStorage) {
+			playerInfo = JSON.parse(playerInfoStorage);
+        } else {
+            continue;
+        }
+
+        showETF2LTeam && (gamemode === "6s" || gamemode === "HL") && updateETF2LTeamOnPage(gamemode, playerInfo, leagueElement);
+        showRGLTeam && (gamemode === "6s" || gamemode === "HL") && updateRGLTeamOnPage(gamemode, playerInfo, leagueElement);
+        showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfo, leagueElement);
+        showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfo, leagueElement);
+        showETF2L && updateETF2LNameOnPage(playerInfo, leagueElement);
+        showRGL && updateRGLName(steamID, playerInfo, leagueElement, gamemode);
+    }
 }
 
 const keysToRemove = [
@@ -2290,5 +2348,13 @@ function putLeagueDataInSlot(main_element, slot_type, data) {
         slot.appendChild(data);
     } else {
         slot.firstChild.replaceWith(data);
+    }
+}
+
+function removeLeagueDataFromSlot(main_element, slot_type) {
+    const slotIndex = LeagueDataIndicesInverse[slot_type];
+    const slot = main_element.childNodes[slotIndex];
+    if (slot.childNodes.length != 0) {
+        slot.firstChild.remove();
     }
 }
