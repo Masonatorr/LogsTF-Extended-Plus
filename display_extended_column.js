@@ -1136,8 +1136,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
-        const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID)
-            .firstChild;
+        const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID).firstChild;
 
         const playerInfoStorage = window.localStorage.getItem(steamID);
         let playerInfo;
@@ -1225,7 +1224,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         showRGL && updateRGLName(steamID, playerInfoToInsert, leagueElement, gamemode);
         showETF2LDivision && (gamemode === "6s" || gamemode === "HL") && updateETF2LDivisionOnPage(gamemode, playerInfoToInsert, leagueElement);
         showRGLDivision && (gamemode === "6s" || gamemode === "HL") && updateRGLDivisionOnPage(gamemode, playerInfoToInsert, leagueElement);
-    };
+    }
 
     //If any fetches were skipped by visibility settings, do them here
     for (let i = 0; i < listOfSteamIDsInStorageThatSkippedFetches.length; i++) {
@@ -1241,7 +1240,7 @@ const updatePlayerRows = async (playerRows, rglNameHeader) => {
         if (playerInfoToInsert === "ratelimited") continue;
         
         window.localStorage.setItem(steamID, JSON.stringify(playerInfoToInsert));
-    };
+    }
 }
 
 // Immediately show cached player info where possible
@@ -1631,7 +1630,7 @@ const showDemoLink = async (playerRows) => {
     const mapPlayed = mapHeader.innerText;
 
     demoHeader.appendChild(demoHeaderHyperlink);
-    console.log(demoHeader)
+    //console.log(demoHeader)
     logDurationHeader.after(demoHeader);
 
     const demoLink = await getOrSaveCachedDemoLink(logID, mapPlayed, listOfSteamIDs[0], timestamp, playerCount);
