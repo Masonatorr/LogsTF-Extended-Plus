@@ -1930,10 +1930,16 @@ window.onload = async function() {
 
             const showDamagePercent = await getShowDamagePercentFlag();
 
+            // Add a listener to every base table header to remove the underline from the extension headers
+            Array.from(headers.children).slice(1).forEach((header) => header.addEventListener('click', removeHeaderUnderline))
+
             if (showDamageEfficiency) {
                 let headerDE = headerDTM.cloneNode(true);
                 headerDE.getElementsByClassName("tip")[0].innerText = "DE";
                 headerDE.getElementsByClassName("tip")[0].setAttribute("data-original-title", "Damage / Damage Taken"); //"Damage Efficiency (Damage / Damage Taken)"
+                //headerDE.id = "headerDE";
+                headerDE.setAttribute("data-lockedorder", "desc");
+                headerDE.addEventListener('click', sortTableByColumn);
                 headers.insertBefore(headerDE, headerDTM);
             }
 
@@ -1941,6 +1947,9 @@ window.onload = async function() {
                 let headerDAPercent = headerDAM.cloneNode(true);
                 headerDAPercent.getElementsByClassName("tip")[0].innerText = "DA%";
                 headerDAPercent.getElementsByClassName("tip")[0].setAttribute("data-original-title", `Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage`); //`Damage Done over Total ${teamOrTotalDamage ? "Match" : "Team"} Damage (Damage / Total ${teamOrTotalDamage ? "Match" : "Team"} Damage)`
+                //headerDAPercent.id = "headerDAPercent";
+                headerDAPercent.setAttribute("data-lockedorder", "desc");
+                headerDAPercent.addEventListener('click', sortTableByColumn);
                 headers.insertBefore(headerDAPercent, headerDAM);
             }
 
@@ -2372,4 +2381,34 @@ function removeLeagueDataFromSlot(main_element, slot_type) {
     if (slot.childNodes.length != 0) {
         slot.firstChild.remove();
     }
+}
+
+// Sort by the column that triggered this. If no sort order is specified in the "data-lockedorder" attribute, descending is assumed.
+function sortTableByColumn(event) {
+    const table = document.getElementById("players");
+    const columnHeader = this;
+    const columnIndex = Array.prototype.indexOf.call(table.children[0].children[0].children, columnHeader);
+    var columnValues = {};
+    // Make a dict of row IDs and values to sort by
+    Array.from(table.children[1].children).forEach((x, i) => columnValues[x.id] = parseFloat(x.children[columnIndex].innerText))
+    // Sort the dict by its values
+    const sortAscending = this.getAttribute("data-lockedorder") == "asc" ? true : false;
+    columnValues = Object.fromEntries(Object.entries(columnValues).sort(([,a],[,b]) => sortAscending ? (a - b) : (b - a)));
+
+    // Reorder the rows
+    var i = 0;
+    for (const [row, _] of Object.entries(columnValues)) {
+        table.children[1].insertBefore(table.children[1].children[row], table.children[1].children[i]);
+        i++;
+    }
+
+    // Remove underlines from other columns
+    Array.from(document.getElementsByClassName("tablesorter-headerAsc")).map((header) => header != this && header.classList.remove("tablesorter-headerAsc"));
+    Array.from(document.getElementsByClassName("tablesorter-headerDesc")).map((header) => header != this && header.classList.remove("tablesorter-headerDesc"));
+    this.classList.add(sortAscending ? "tablesorter-headerAsc" : "tablesorter-headerDesc")
+}
+
+function removeHeaderUnderline(event) {
+    Array.from(document.getElementsByClassName("tablesorter-headerAsc")).map((header) => header != this && header.classList.remove("tablesorter-headerAsc"));
+    Array.from(document.getElementsByClassName("tablesorter-headerDesc")).map((header) => header != this && header.classList.remove("tablesorter-headerDesc"));
 }
