@@ -1260,7 +1260,19 @@ const immediatelyPopulatePlayerRows = async (playerRows, rglNameHeader) => {
 
     for (let i = 0; i < listOfSteamIDs.length; i++) {
         const steamID = listOfSteamIDs[i];
-        const leagueElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID).firstChild;
+        const currentRowElement = arrayOfPlayerRows.find((playerRow) => playerRow.id.split("_")[1] == steamID);
+        const leagueElement = currentRowElement.firstChild;
+
+        // Add trends.tf and more.tf links to the user dropdown menu
+        const playerDropdown = currentRowElement.children[2].getElementsByClassName("dropdown-menu")[0];
+        const trendsLink = playerDropdown.firstElementChild.cloneNode(true);
+        trendsLink.firstChild.innerText = "Trends.tf";
+        trendsLink.firstChild.href = `https://trends.tf/player/${steamID}`
+        playerDropdown.appendChild(trendsLink);
+        const moreLink = playerDropdown.firstElementChild.cloneNode(true);
+        moreLink.firstChild.innerText = "More.tf";
+        moreLink.firstChild.href = `https://more.tf/profile/${steamID}`
+        playerDropdown.appendChild(moreLink);
 
         const playerInfoStorage = window.localStorage.getItem(steamID);
         let playerInfo;
