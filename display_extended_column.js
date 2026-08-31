@@ -671,6 +671,10 @@ const updateETF2LNameOnPage = async (playerInfo, leagueElement) => {
 	if (getShowRGLTeamFlag()) etf2lLink.style.marginLeft = "6px";
     putLeagueDataInSlot(leagueElement, "etf2l_name", etf2lLink);
 
+    //Replace ETF2L link in dropdown with direct link
+    const playerNameElement = leagueElement.parentElement.children[2].getElementsByClassName("dropdown-menu")[0].children[3];
+    playerNameElement.firstChild.href = `https://etf2l.org/forum/user/${playerInfo.etf2l.id}/`;
+
     //Determine whether the player is banned, and if so display ban info
     const banInfo = playerInfo.etf2l.banInfo;
     if (banInfo == null) return;
