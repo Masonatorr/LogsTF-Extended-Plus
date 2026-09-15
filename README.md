@@ -3,7 +3,7 @@ If you have any issues or suggestions, please post them in the [Issues](https://
 # Logs.TF Extended Plus
 GitHub page for the Logs.TF Extended Plus browser extension.
 
-[Chrome Web Store](https://chromewebstore.google.com/detail/logstf-extended-plus/ajibpnhcbfhfjljjgbbbpfnhecgoifba) | [Firefox Addons](https://addons.mozilla.org/en-US/firefox/addon/logs-tf-extended-plus/)
+[Chrome Web Store](https://chromewebstore.google.com/detail/logstf-extended-plus/ajibpnhcbfhfjljjgbbbpfnhecgoifba) | [Firefox Addons](https://addons.mozilla.org/en-US/firefox/addon/logstf-extended-plus/)
 
 Based on [Logs.TF Extended](https://chromewebstore.google.com/detail/logstfextended/jcgpbbalnjcjedofegcdmeidnllgmapn) by Kore4n and [logs.tf Data Enhancer](https://chromewebstore.google.com/detail/logstf-data-enhancer/nicfbjfmppdohagebckodgnlmgilkeil) by magistr
 
