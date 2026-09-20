@@ -496,6 +496,7 @@ const getHighestNumericalDivisionPlayed = (pastTeams, gameMode) => {
     let greatestNumericalDivisionPlayed = RGLDivisions.None;
     for (let i = 0; i < pastTeams.length; i++) {
         if (pastTeams[i].formatName != gameMode) continue;
+        if (pastTeams[i].seasonName.toLowerCase().includes("cup")) continue;
 
         const divisionName = pastTeams[i].divisionName.replace(/RGL-/g, '')
         const numericalValue = RGLDivisions[divisionName];
@@ -512,6 +513,7 @@ const getLatestDivisionPlayed = (pastTeams, gameMode) => {
 
     for (let i = 0; i < pastTeams.length; i++) {
         if (pastTeams[i].formatName != gameMode) continue;
+        if (pastTeams[i].seasonName.toLowerCase().includes("cup")) continue;
         
         const divisionName = pastTeams[i].divisionName.replace(/RGL-/g, '')
         if (RGLDivisions[divisionName] === undefined) continue; // To account for special division names like "Spec 2-day" from cups
